@@ -15,6 +15,7 @@ export default function Navigation() {
     { href: "/", label: "🏠 Start" },
     { href: "/generator", label: "✨ Neue Geschichte" },
     { href: "/bibliothek", label: "📚 Bibliothek" },
+    { href: "/preise", label: "💎 Preise" },
   ]
 
   async function abmelden() {

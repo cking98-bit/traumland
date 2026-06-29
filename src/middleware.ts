@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 
 // Seiten die OHNE Login erreichbar sind
-const öffentlicheSeiten = ["/", "/login"]
+const öffentlicheSeiten = ["/", "/login", "/preise"]
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
