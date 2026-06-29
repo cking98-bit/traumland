@@ -1,5 +1,6 @@
 import Link from "next/link"
-import VorleseButton from "@/app/components/VorleseButton"
+import VorleseButton from "@/components/VorleseButton"
+import Illustration from "@/components/Illustration"
 
 export default async function GeschichtePage({
   searchParams,
@@ -11,9 +12,11 @@ export default async function GeschichtePage({
     stil?: string
     dauer?: string
     geschichte?: string
+    id?: string
   }>
 }) {
-  const { name, alter, stichwörter, stil, dauer, geschichte } = await searchParams
+  const { name, alter, stichwörter, stil, dauer, geschichte, id } =
+    await searchParams
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -26,10 +29,12 @@ export default async function GeschichtePage({
       </p>
 
       <div className="bg-indigo-900 rounded-2xl p-8">
-        {/* Illustration Platzhalter */}
-        <div className="bg-indigo-800 rounded-xl h-48 flex items-center justify-center mb-6">
-          <span className="text-indigo-400">🎨 Illustration kommt bald</span>
-        </div>
+        {/* KI-Illustration – wird automatisch generiert */}
+        <Illustration
+          stichwörter={stichwörter || ""}
+          stil={stil || ""}
+          geschichteId={id}
+        />
 
         {/* Vorlese-Funktion */}
         {geschichte && <VorleseButton text={geschichte} />}

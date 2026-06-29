@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { speichereGeschichte } from "@/lib/geschichten"
+import { speichereGeschichte, istVoll, MAX_GESCHICHTEN } from "@/lib/geschichten"
 
 const STILE = [
   { id: "abenteuer", label: "Abenteuer 🗺️" },
@@ -37,6 +37,8 @@ export default function GeneratorPage() {
   }
 
   function validieren() {
+    if (istVoll())
+      return `Deine Bibliothek ist voll (max. ${MAX_GESCHICHTEN} Geschichten). Bitte lösche zuerst eine Geschichte.`
     if (!name.trim()) return "Bitte gib den Namen deines Kindes ein."
     if (!stichwörter.trim()) return "Bitte gib mindestens ein Stichwort ein."
     if (stil.length === 0) return "Bitte wähle mindestens einen Geschichte-Stil aus."
@@ -76,8 +78,7 @@ export default function GeneratorPage() {
 
       const stilText = stil.join(", ")
 
-      // Geschichte in der Bibliothek speichern
-      speichereGeschichte({
+      const id = speichereGeschichte({
         name,
         alter,
         stichwörter,
@@ -93,6 +94,7 @@ export default function GeneratorPage() {
         stil: stilText,
         dauer,
         geschichte: data.geschichte,
+        id: id || "",
       })
 
       router.push(`/geschichte?${params.toString()}`)
@@ -135,7 +137,12 @@ export default function GeneratorPage() {
       <div className="bg-indigo-900 rounded-2xl p-8 flex flex-col gap-6">
         {fehler && (
           <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-xl px-4 py-3 text-sm">
-            {fehler}
+            {fehler}{" "}
+            {istVoll() && (
+              <a href="/bibliothek" className="underline font-bold">
+                Zur Bibliothek →
+              </a>
+            )}
           </div>
         )}
 
@@ -148,7 +155,7 @@ export default function GeneratorPage() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="z.B. Emma"
+            placeholder="z.B. Anna"
             className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
           />
         </div>
@@ -186,13 +193,11 @@ export default function GeneratorPage() {
           />
         </div>
 
-        {/* Stil - Mehrfachauswahl */}
+        {/* Stil */}
         <div>
           <label className="text-white font-medium block mb-2">
             Geschichte-Stil{" "}
-            <span className="text-indigo-400 text-sm">
-              (mehrere auswählbar)
-            </span>
+            <span className="text-indigo-400 text-sm">(mehrere auswählbar)</span>
           </label>
           <div className="grid grid-cols-3 gap-3">
             {STILE.map((s) => (
@@ -236,7 +241,6 @@ export default function GeneratorPage() {
           </div>
         </div>
 
-        {/* Button */}
         <button
           onClick={handleSubmit}
           className="w-full bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-4 rounded-xl text-lg transition mt-2"

@@ -5,6 +5,7 @@ import Link from "next/link"
 import {
   ladeGeschichten,
   löscheGeschichte,
+  MAX_GESCHICHTEN,
   type Geschichte,
 } from "@/lib/geschichten"
 
@@ -22,7 +23,6 @@ export default function BibliothekPage() {
     setGeschichten(ladeGeschichten())
   }
 
-  // Baut den Link zur Geschichte-Seite mit allen Daten
   function geschichteLink(g: Geschichte) {
     const params = new URLSearchParams({
       name: g.name,
@@ -31,15 +31,36 @@ export default function BibliothekPage() {
       stil: g.stil,
       dauer: g.dauer,
       geschichte: g.geschichte,
+      id: g.id,
     })
     return `/geschichte?${params.toString()}`
   }
 
+  const anzahl = geschichten.length
+  const istVoll = anzahl >= MAX_GESCHICHTEN
+
   return (
     <div>
-      <h1 className="text-3xl font-bold text-white mb-2">
-        📚 Meine Bibliothek
-      </h1>
+      <div className="flex items-center justify-between mb-2">
+        <h1 className="text-3xl font-bold text-white">📚 Meine Bibliothek</h1>
+        <span
+          className={`text-sm font-medium px-3 py-1 rounded-full ${
+            istVoll
+              ? "bg-red-500/20 text-red-300"
+              : "bg-indigo-800 text-indigo-300"
+          }`}
+        >
+          {anzahl} / {MAX_GESCHICHTEN}
+        </span>
+      </div>
+
+      {istVoll && (
+        <div className="bg-yellow-400/10 border border-yellow-400/30 text-yellow-300 rounded-xl px-4 py-3 text-sm mb-6">
+          📚 Deine Bibliothek ist voll – lösche eine Geschichte um eine neue
+          erstellen zu können.
+        </div>
+      )}
+
       <p className="text-indigo-300 mb-8">
         Alle deine generierten Geschichten auf einen Blick
       </p>
@@ -68,31 +89,46 @@ export default function BibliothekPage() {
         {geschichten.map((g) => (
           <div
             key={g.id}
-            className="bg-indigo-900 rounded-2xl p-6 flex flex-col"
+            className="bg-indigo-900 rounded-2xl overflow-hidden flex flex-col"
           >
-            <h3 className="text-white font-bold text-lg mb-1">
-              🌙 Geschichte für {g.name}
-            </h3>
-            <p className="text-indigo-400 text-xs mb-3">
-              {new Date(g.datum).toLocaleDateString("de-DE")} · {g.alter} Jahre ·{" "}
-              {g.stil}
-            </p>
-            <p className="text-indigo-200 text-sm mb-4 line-clamp-3 flex-1">
-              {g.geschichte}
-            </p>
-            <div className="flex gap-2">
-              <Link
-                href={geschichteLink(g)}
-                className="flex-1 bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-2 rounded-lg text-center text-sm transition"
-              >
-                Öffnen
-              </Link>
-              <button
-                onClick={() => entfernen(g.id)}
-                className="bg-indigo-800 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm transition"
-              >
-                🗑
-              </button>
+            {/* Gespeichertes Bild */}
+            {g.bild ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={g.bild}
+                alt="Illustration"
+                className="w-full h-40 object-cover"
+              />
+            ) : (
+              <div className="w-full h-40 bg-indigo-800 flex items-center justify-center">
+                <span className="text-indigo-500 text-sm">🎨 Kein Bild</span>
+              </div>
+            )}
+
+            <div className="p-5 flex flex-col flex-1">
+              <h3 className="text-white font-bold text-lg mb-1">
+                🌙 {g.name}
+              </h3>
+              <p className="text-indigo-400 text-xs mb-2">
+                {new Date(g.datum).toLocaleDateString("de-DE")} · {g.alter} Jahre · ~{g.dauer} Min
+              </p>
+              <p className="text-indigo-200 text-sm mb-4 line-clamp-2 flex-1">
+                {g.geschichte}
+              </p>
+              <div className="flex gap-2">
+                <Link
+                  href={geschichteLink(g)}
+                  className="flex-1 bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-2 rounded-lg text-center text-sm transition"
+                >
+                  Öffnen
+                </Link>
+                <button
+                  onClick={() => entfernen(g.id)}
+                  className="bg-indigo-800 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm transition"
+                >
+                  🗑
+                </button>
+              </div>
             </div>
           </div>
         ))}
