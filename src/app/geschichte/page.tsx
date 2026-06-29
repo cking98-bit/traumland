@@ -1,35 +1,43 @@
 import Link from "next/link"
+import VorleseButton from "@/app/components/VorleseButton"
 
-export default function GeschichtePage({
+export default async function GeschichtePage({
   searchParams,
 }: {
-  searchParams: { name?: string; alter?: string; stichwörter?: string; stil?: string }
+  searchParams: Promise<{
+    name?: string
+    alter?: string
+    stichwörter?: string
+    stil?: string
+    dauer?: string
+    geschichte?: string
+  }>
 }) {
-  const { name, alter, stichwörter, stil } = searchParams
+  const { name, alter, stichwörter, stil, dauer, geschichte } = await searchParams
 
   return (
     <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold text-white mb-2">
+      <h1 className="text-3xl font-bold text-white mb-1">
         🌙 Geschichte für {name}
       </h1>
-      <p className="text-indigo-300 mb-8">
+      <p className="text-indigo-400 text-sm mb-8">
         {alter} Jahre · {stichwörter} · {stil}
+        {dauer ? ` · ~${dauer} Min` : ""}
       </p>
 
-      {/* Platzhalter - später kommt hier die echte KI-Geschichte */}
       <div className="bg-indigo-900 rounded-2xl p-8">
+        {/* Illustration Platzhalter */}
         <div className="bg-indigo-800 rounded-xl h-48 flex items-center justify-center mb-6">
-          <span className="text-indigo-400">🎨 Illustration kommt hier</span>
+          <span className="text-indigo-400">🎨 Illustration kommt bald</span>
         </div>
-        <p className="text-indigo-200 leading-relaxed text-lg">
-          Es war einmal ein Kind namens <strong className="text-white">{name}</strong>,
-          das sich nichts sehnlicher wünschte als ein großes Abenteuer.
-          Eines Abends, als der Mond hell am Himmel leuchtete, begann
-          die Geschichte...
-        </p>
-        <p className="text-indigo-400 mt-4 text-sm italic">
-          ✨ Bald wird hier deine echte KI-Geschichte erscheinen!
-        </p>
+
+        {/* Vorlese-Funktion */}
+        {geschichte && <VorleseButton text={geschichte} />}
+
+        {/* Geschichte */}
+        <div className="text-indigo-100 leading-relaxed text-lg whitespace-pre-line">
+          {geschichte}
+        </div>
       </div>
 
       <div className="flex gap-4 mt-6">

@@ -12,6 +12,12 @@ const STILE = [
   { id: "fantasy", label: "Fantasy 🐉" },
 ]
 
+const DAUER = [
+  { id: "2", label: "Kurz · ~2 Min" },
+  { id: "5", label: "Mittel · ~5 Min" },
+  { id: "10", label: "Lang · ~10 Min" },
+]
+
 export default function GeneratorPage() {
   const router = useRouter()
 
@@ -19,6 +25,7 @@ export default function GeneratorPage() {
   const [alter, setAlter] = useState("5")
   const [stichwörter, setStichwörter] = useState("")
   const [stil, setStil] = useState<string[]>([])
+  const [dauer, setDauer] = useState("5")
   const [laden, setLaden] = useState(false)
   const [fehler, setFehler] = useState("")
 
@@ -45,16 +52,41 @@ export default function GeneratorPage() {
     setFehler("")
     setLaden(true)
 
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    try {
+      const response = await fetch("/api/geschichte", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          alter,
+          stichwörter,
+          stile: stil.join(", "),
+          dauer,
+        }),
+      })
 
-    const params = new URLSearchParams({
-      name,
-      alter,
-      stichwörter,
-      stil: stil.join(", "),
-    })
+      const data = await response.json()
 
-    router.push(`/geschichte?${params.toString()}`)
+      if (data.fehler) {
+        setFehler(data.fehler)
+        setLaden(false)
+        return
+      }
+
+      const params = new URLSearchParams({
+        name,
+        alter,
+        stichwörter,
+        stil: stil.join(", "),
+        dauer,
+        geschichte: data.geschichte,
+      })
+
+      router.push(`/geschichte?${params.toString()}`)
+    } catch {
+      setFehler("Verbindungsfehler – bitte versuche es erneut.")
+      setLaden(false)
+    }
   }
 
   if (laden) {
@@ -163,6 +195,31 @@ export default function GeneratorPage() {
                 }`}
               >
                 {s.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Dauer */}
+        <div>
+          <label className="text-white font-medium block mb-2">
+            Dauer{" "}
+            <span className="text-indigo-400 text-sm">
+              (wie lange soll vorgelesen werden?)
+            </span>
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            {DAUER.map((d) => (
+              <button
+                key={d.id}
+                onClick={() => setDauer(d.id)}
+                className={`rounded-xl py-3 text-sm font-medium transition ${
+                  dauer === d.id
+                    ? "bg-yellow-400 text-indigo-950"
+                    : "bg-indigo-800 hover:bg-indigo-700 text-white"
+                }`}
+              >
+                {d.label}
               </button>
             ))}
           </div>
