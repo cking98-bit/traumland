@@ -15,18 +15,23 @@ const STILE = [
 export default function GeneratorPage() {
   const router = useRouter()
 
-  // Form-Daten speichern
   const [name, setName] = useState("")
   const [alter, setAlter] = useState("5")
   const [stichwörter, setStichwörter] = useState("")
-  const [stil, setStil] = useState("")
+  const [stil, setStil] = useState<string[]>([])
   const [laden, setLaden] = useState(false)
   const [fehler, setFehler] = useState("")
+
+  function toggleStil(id: string) {
+    setStil((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    )
+  }
 
   function validieren() {
     if (!name.trim()) return "Bitte gib den Namen deines Kindes ein."
     if (!stichwörter.trim()) return "Bitte gib mindestens ein Stichwort ein."
-    if (!stil) return "Bitte wähle einen Geschichte-Stil aus."
+    if (stil.length === 0) return "Bitte wähle mindestens einen Geschichte-Stil aus."
     return ""
   }
 
@@ -40,15 +45,13 @@ export default function GeneratorPage() {
     setFehler("")
     setLaden(true)
 
-    // Später: echte KI-Anfrage. Jetzt: kurz warten und weiterleiten
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
-    // Daten als URL-Parameter übergeben
     const params = new URLSearchParams({
       name,
       alter,
       stichwörter,
-      stil,
+      stil: stil.join(", "),
     })
 
     router.push(`/geschichte?${params.toString()}`)
@@ -85,7 +88,6 @@ export default function GeneratorPage() {
       </p>
 
       <div className="bg-indigo-900 rounded-2xl p-8 flex flex-col gap-6">
-        {/* Fehlermeldung */}
         {fehler && (
           <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-xl px-4 py-3 text-sm">
             {fehler}
@@ -141,18 +143,21 @@ export default function GeneratorPage() {
           />
         </div>
 
-        {/* Stil */}
+        {/* Stil - Mehrfachauswahl */}
         <div>
           <label className="text-white font-medium block mb-2">
-            Geschichte-Stil
+            Geschichte-Stil{" "}
+            <span className="text-indigo-400 text-sm">
+              (mehrere auswählbar)
+            </span>
           </label>
           <div className="grid grid-cols-3 gap-3">
             {STILE.map((s) => (
               <button
                 key={s.id}
-                onClick={() => setStil(s.id)}
+                onClick={() => toggleStil(s.id)}
                 className={`rounded-xl py-3 text-sm font-medium transition ${
-                  stil === s.id
+                  stil.includes(s.id)
                     ? "bg-yellow-400 text-indigo-950"
                     : "bg-indigo-800 hover:bg-indigo-700 text-white"
                 }`}
