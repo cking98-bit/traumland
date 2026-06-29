@@ -27,6 +27,10 @@ export default function LoginPage() {
 
   async function mitGoogleAnmelden() {
     setFehler("")
+    if (!auth) {
+      setFehler("Anmeldedienst ist nicht verfügbar. Bitte später erneut versuchen.")
+      return
+    }
     try {
       await signInWithPopup(auth, googleProvider)
       router.push("/")
@@ -52,6 +56,11 @@ export default function LoginPage() {
         setFehler("Die Passwörter stimmen nicht überein.")
         return
       }
+    }
+
+    if (!auth) {
+      setFehler("Anmeldedienst ist nicht verfügbar. Bitte später erneut versuchen.")
+      return
     }
 
     setLadevorgang(true)

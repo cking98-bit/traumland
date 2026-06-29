@@ -1,4 +1,4 @@
-import { initializeApp, getApps } from "firebase/app"
+import { initializeApp, getApps, type FirebaseApp } from "firebase/app"
 import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth"
 
 const firebaseConfig = {
@@ -10,10 +10,19 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 }
 
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
+let auth: Auth | null = null
 
-// Auth NUR im Browser starten – sonst stürzt der Build beim Prerendering ab
-export const auth =
-  typeof window !== "undefined" ? getAuth(app) : ({} as Auth)
+// Firebase NUR im Browser starten und Fehler abfangen.
+// So lässt eine fehlende/falsche Konfiguration nicht die ganze Seite abstürzen.
+if (typeof window !== "undefined") {
+  try {
+    const app: FirebaseApp =
+      getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0]
+    auth = getAuth(app)
+  } catch (e) {
+    console.error("Firebase konnte nicht initialisiert werden:", e)
+  }
+}
 
+export { auth }
 export const googleProvider = new GoogleAuthProvider()

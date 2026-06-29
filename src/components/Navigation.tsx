@@ -18,7 +18,9 @@ export default function Navigation() {
   ]
 
   async function abmelden() {
-    await signOut(auth)
+    if (auth) await signOut(auth)
+    // Session-Cookie löschen, damit die Middleware sofort wieder schützt
+    document.cookie = "__session=; path=/; max-age=0"
     router.push("/login")
   }
 

@@ -27,6 +27,11 @@ export default function AuthProvider({
   const [laden, setLaden] = useState(true)
 
   useEffect(() => {
+    // Falls Firebase nicht initialisiert werden konnte: einfach als "nicht eingeloggt" behandeln
+    if (!auth) {
+      setLaden(false)
+      return
+    }
     const abmelden = onAuthStateChanged(auth, async (user) => {
       setNutzer(user)
       setLaden(false)
