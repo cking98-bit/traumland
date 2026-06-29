@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { speichereGeschichte } from "@/lib/geschichten"
 
 const STILE = [
   { id: "abenteuer", label: "Abenteuer 🗺️" },
@@ -73,11 +74,23 @@ export default function GeneratorPage() {
         return
       }
 
+      const stilText = stil.join(", ")
+
+      // Geschichte in der Bibliothek speichern
+      speichereGeschichte({
+        name,
+        alter,
+        stichwörter,
+        stil: stilText,
+        dauer,
+        geschichte: data.geschichte,
+      })
+
       const params = new URLSearchParams({
         name,
         alter,
         stichwörter,
-        stil: stil.join(", "),
+        stil: stilText,
         dauer,
         geschichte: data.geschichte,
       })
@@ -142,9 +155,7 @@ export default function GeneratorPage() {
 
         {/* Alter */}
         <div>
-          <label className="text-white font-medium block mb-2">
-            Alter
-          </label>
+          <label className="text-white font-medium block mb-2">Alter</label>
           <select
             value={alter}
             onChange={(e) => setAlter(e.target.value)}
