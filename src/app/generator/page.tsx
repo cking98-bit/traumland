@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { speichereGeschichte, istVoll, MAX_GESCHICHTEN } from "@/lib/geschichten"
+import SchutzRoute from "@/components/Schutzroute"
 
 const STILE = [
   { id: "abenteuer", label: "Abenteuer 🗺️" },
@@ -77,7 +78,6 @@ export default function GeneratorPage() {
       }
 
       const stilText = stil.join(", ")
-
       const id = speichereGeschichte({
         name,
         alter,
@@ -106,148 +106,147 @@ export default function GeneratorPage() {
 
   if (laden) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
-        <div className="text-7xl animate-bounce">🌙</div>
-        <h2 className="text-2xl font-bold text-white">
-          Wir zaubern deine Geschichte...
-        </h2>
-        <p className="text-indigo-300">Das dauert nur einen Moment ✨</p>
-        <div className="flex gap-2 mt-4">
-          {[0, 1, 2].map((i) => (
-            <div
-              key={i}
-              className="w-3 h-3 bg-yellow-400 rounded-full animate-bounce"
-              style={{ animationDelay: `${i * 0.2}s` }}
-            />
-          ))}
+      <SchutzRoute>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
+          <div className="text-7xl animate-bounce">🌙</div>
+          <h2 className="text-2xl font-bold text-white">
+            Wir zaubern deine Geschichte...
+          </h2>
+          <p className="text-indigo-300">Das dauert nur einen Moment ✨</p>
+          <div className="flex gap-2 mt-4">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="w-3 h-3 bg-yellow-400 rounded-full animate-bounce"
+                style={{ animationDelay: `${i * 0.2}s` }}
+              />
+            ))}
+          </div>
         </div>
-      </div>
+      </SchutzRoute>
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-3xl font-bold text-white mb-2">
-        ✨ Neue Geschichte erstellen
-      </h1>
-      <p className="text-indigo-300 mb-8">
-        Erzähl uns von deinem Kind – wir zaubern eine einzigartige Geschichte!
-      </p>
+    <SchutzRoute>
+      <div className="max-w-2xl mx-auto">
+        <h1 className="text-3xl font-bold text-white mb-2">
+          ✨ Neue Geschichte erstellen
+        </h1>
+        <p className="text-indigo-300 mb-8">
+          Erzähl uns von deinem Kind – wir zaubern eine einzigartige Geschichte!
+        </p>
 
-      <div className="bg-indigo-900 rounded-2xl p-8 flex flex-col gap-6">
-        {fehler && (
-          <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-xl px-4 py-3 text-sm">
-            {fehler}{" "}
-            {istVoll() && (
-              <a href="/bibliothek" className="underline font-bold">
-                Zur Bibliothek →
-              </a>
-            )}
+        <div className="bg-indigo-900 rounded-2xl p-8 flex flex-col gap-6">
+          {fehler && (
+            <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-xl px-4 py-3 text-sm">
+              {fehler}{" "}
+              {istVoll() && (
+                <a href="/bibliothek" className="underline font-bold">
+                  Zur Bibliothek →
+                </a>
+              )}
+            </div>
+          )}
+
+          <div>
+            <label className="text-white font-medium block mb-2">
+              Name des Kindes
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="z.B. Anna"
+              className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
+            />
           </div>
-        )}
 
-        {/* Name */}
-        <div>
-          <label className="text-white font-medium block mb-2">
-            Name des Kindes
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="z.B. Anna"
-            className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
-          />
-        </div>
+          <div>
+            <label className="text-white font-medium block mb-2">Alter</label>
+            <select
+              value={alter}
+              onChange={(e) => setAlter(e.target.value)}
+              className="w-full bg-indigo-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
+            >
+              {[2, 3, 4, 5, 6, 7, 8].map((age) => (
+                <option key={age} value={age}>
+                  {age} Jahre
+                </option>
+              ))}
+            </select>
+          </div>
 
-        {/* Alter */}
-        <div>
-          <label className="text-white font-medium block mb-2">Alter</label>
-          <select
-            value={alter}
-            onChange={(e) => setAlter(e.target.value)}
-            className="w-full bg-indigo-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
+          <div>
+            <label className="text-white font-medium block mb-2">
+              Stichwörter{" "}
+              <span className="text-indigo-400 text-sm">
+                (was liebt dein Kind?)
+              </span>
+            </label>
+            <input
+              type="text"
+              value={stichwörter}
+              onChange={(e) => setStichwörter(e.target.value)}
+              placeholder="z.B. Drachen, Weltall, Fußball"
+              className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
+            />
+          </div>
+
+          <div>
+            <label className="text-white font-medium block mb-2">
+              Geschichte-Stil{" "}
+              <span className="text-indigo-400 text-sm">(mehrere auswählbar)</span>
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {STILE.map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => toggleStil(s.id)}
+                  className={`rounded-xl py-3 text-sm font-medium transition ${
+                    stil.includes(s.id)
+                      ? "bg-yellow-400 text-indigo-950"
+                      : "bg-indigo-800 hover:bg-indigo-700 text-white"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-white font-medium block mb-2">
+              Dauer{" "}
+              <span className="text-indigo-400 text-sm">
+                (wie lange soll vorgelesen werden?)
+              </span>
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {DAUER.map((d) => (
+                <button
+                  key={d.id}
+                  onClick={() => setDauer(d.id)}
+                  className={`rounded-xl py-3 text-sm font-medium transition ${
+                    dauer === d.id
+                      ? "bg-yellow-400 text-indigo-950"
+                      : "bg-indigo-800 hover:bg-indigo-700 text-white"
+                  }`}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            className="w-full bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-4 rounded-xl text-lg transition mt-2"
           >
-            {[2, 3, 4, 5, 6, 7, 8].map((age) => (
-              <option key={age} value={age}>
-                {age} Jahre
-              </option>
-            ))}
-          </select>
+            Geschichte generieren ✨
+          </button>
         </div>
-
-        {/* Stichwörter */}
-        <div>
-          <label className="text-white font-medium block mb-2">
-            Stichwörter{" "}
-            <span className="text-indigo-400 text-sm">
-              (was liebt dein Kind?)
-            </span>
-          </label>
-          <input
-            type="text"
-            value={stichwörter}
-            onChange={(e) => setStichwörter(e.target.value)}
-            placeholder="z.B. Drachen, Weltall, Fußball"
-            className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
-          />
-        </div>
-
-        {/* Stil */}
-        <div>
-          <label className="text-white font-medium block mb-2">
-            Geschichte-Stil{" "}
-            <span className="text-indigo-400 text-sm">(mehrere auswählbar)</span>
-          </label>
-          <div className="grid grid-cols-3 gap-3">
-            {STILE.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => toggleStil(s.id)}
-                className={`rounded-xl py-3 text-sm font-medium transition ${
-                  stil.includes(s.id)
-                    ? "bg-yellow-400 text-indigo-950"
-                    : "bg-indigo-800 hover:bg-indigo-700 text-white"
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Dauer */}
-        <div>
-          <label className="text-white font-medium block mb-2">
-            Dauer{" "}
-            <span className="text-indigo-400 text-sm">
-              (wie lange soll vorgelesen werden?)
-            </span>
-          </label>
-          <div className="grid grid-cols-3 gap-3">
-            {DAUER.map((d) => (
-              <button
-                key={d.id}
-                onClick={() => setDauer(d.id)}
-                className={`rounded-xl py-3 text-sm font-medium transition ${
-                  dauer === d.id
-                    ? "bg-yellow-400 text-indigo-950"
-                    : "bg-indigo-800 hover:bg-indigo-700 text-white"
-                }`}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <button
-          onClick={handleSubmit}
-          className="w-full bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-4 rounded-xl text-lg transition mt-2"
-        >
-          Geschichte generieren ✨
-        </button>
       </div>
-    </div>
+    </SchutzRoute>
   )
 }
