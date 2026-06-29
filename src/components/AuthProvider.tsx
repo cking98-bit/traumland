@@ -27,9 +27,18 @@ export default function AuthProvider({
   const [laden, setLaden] = useState(true)
 
   useEffect(() => {
-    const abmelden = onAuthStateChanged(auth, (user) => {
+    const abmelden = onAuthStateChanged(auth, async (user) => {
       setNutzer(user)
       setLaden(false)
+
+      if (user) {
+        // Token als Cookie setzen damit Middleware es lesen kann
+        const token = await user.getIdToken()
+        document.cookie = `__session=${token}; path=/; max-age=3600; SameSite=Strict`
+      } else {
+        // Cookie löschen beim Abmelden
+        document.cookie = "__session=; path=/; max-age=0"
+      }
     })
     return () => abmelden()
   }, [])
