@@ -6,7 +6,6 @@ import Link from "next/link"
 import { speichereGeschichte, istVoll, MAX_GESCHICHTEN } from "@/lib/geschichten"
 import { ladeProfile, berechneAlter, type Profil } from "@/lib/profile"
 import SchutzRoute from "@/components/SchutzRoute"
-import { hatAbo } from "@/lib/abo"
 
 const STILE = [
   { id: "abenteuer", label: "Abenteuer 🗺️" },
@@ -33,10 +32,8 @@ export default function GeneratorPage() {
   const [dauer, setDauer] = useState("5")
   const [laden, setLaden] = useState(false)
   const [fehler, setFehler] = useState("")
-  const [abo, setAbo] = useState(true)
 
   useEffect(() => {
-    setAbo(hatAbo())
     const geladen = ladeProfile()
     setProfile(geladen)
 
@@ -130,7 +127,7 @@ export default function GeneratorPage() {
 
   if (laden) {
     return (
-      <SchutzRoute>
+      <SchutzRoute abo>
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
           <div className="text-7xl animate-bounce">🌙</div>
           <h2 className="text-2xl font-bold text-white">
@@ -152,7 +149,7 @@ export default function GeneratorPage() {
   }
 
   return (
-    <SchutzRoute>
+    <SchutzRoute abo>
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-2">
           ✨ Neue Geschichte erstellen
@@ -161,24 +158,8 @@ export default function GeneratorPage() {
           Erzähl uns von deinem Kind – wir zaubern eine einzigartige Geschichte!
         </p>
 
-        {/* Kein Abo → erst Plan wählen */}
-        {!abo ? (
-          <div className="bg-indigo-900 rounded-2xl p-10 text-center">
-            <div className="text-6xl mb-4">🔒</div>
-            <h2 className="text-white text-xl font-bold mb-2">
-              Erst einen Plan wählen
-            </h2>
-            <p className="text-indigo-300 mb-6">
-              Um Geschichten zu erstellen, brauchst du ein aktives Abo.
-            </p>
-            <Link
-              href="/preise"
-              className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-8 py-3 rounded-xl transition inline-block"
-            >
-              Pläne ansehen 💎
-            </Link>
-          </div>
-        ) : profile.length === 0 ? (
+        {/* Kein Profil vorhanden → zuerst anlegen */}
+        {profile.length === 0 ? (
           <div className="bg-indigo-900 rounded-2xl p-10 text-center">
             <div className="text-5xl mb-3">👧</div>
             <h2 className="text-white text-xl font-bold mb-2">

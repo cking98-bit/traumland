@@ -8,6 +8,7 @@ import {
   MAX_GESCHICHTEN,
   type Geschichte,
 } from "@/lib/geschichten"
+import SchutzRoute from "@/components/SchutzRoute"
 
 export default function BibliothekPage() {
   const [geschichten, setGeschichten] = useState<Geschichte[]>([])
@@ -40,6 +41,7 @@ export default function BibliothekPage() {
   const istVoll = anzahl >= MAX_GESCHICHTEN
 
   return (
+    <SchutzRoute abo>
     <div>
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-3xl font-bold text-white">📚 Meine Bibliothek</h1>
@@ -134,5 +136,6 @@ export default function BibliothekPage() {
         ))}
       </div>
     </div>
+    </SchutzRoute>
   )
 }

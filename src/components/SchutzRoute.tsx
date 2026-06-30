@@ -1,25 +1,41 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/AuthProvider"
+import { hatAbo } from "@/lib/abo"
 
 export default function SchutzRoute({
   children,
+  abo = false,
 }: {
   children: React.ReactNode
+  abo?: boolean // true = zusätzlich aktives Abo erforderlich
 }) {
   const { nutzer, laden } = useAuth()
   const router = useRouter()
+  const [bereit, setBereit] = useState(false)
 
   useEffect(() => {
-    if (!laden && !nutzer) {
-      router.push("/login")
-    }
-  }, [nutzer, laden, router])
+    if (laden) return
 
-  // Ladeanimation während Auth-Status geprüft wird
-  if (laden) {
+    // Nicht eingeloggt → zur Anmeldung
+    if (!nutzer) {
+      router.push("/login")
+      return
+    }
+
+    // Eingeloggt, aber kein aktives Abo → immer zu den Preisen
+    if (abo && !hatAbo()) {
+      router.push("/preise")
+      return
+    }
+
+    setBereit(true)
+  }, [nutzer, laden, abo, router])
+
+  // Während geprüft/umgeleitet wird: Ladeanzeige
+  if (laden || !bereit) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="text-5xl animate-bounce">🌙</div>
@@ -27,9 +43,6 @@ export default function SchutzRoute({
       </div>
     )
   }
-
-  // Nicht eingeloggt → nichts anzeigen (Weiterleitung läuft)
-  if (!nutzer) return null
 
   return <>{children}</>
 }

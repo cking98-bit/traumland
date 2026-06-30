@@ -7,6 +7,7 @@ import {
   createUserWithEmailAndPassword,
 } from "firebase/auth"
 import { auth, googleProvider } from "@/lib/firebase"
+import { hatAbo } from "@/lib/abo"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/AuthProvider"
 import { useSprache } from "@/components/LanguageProvider"
@@ -24,7 +25,7 @@ export default function LoginPage() {
   const [ladevorgang, setLadevorgang] = useState(false)
 
   useEffect(() => {
-    if (!laden && nutzer) router.push("/")
+    if (!laden && nutzer) router.push(hatAbo() ? "/" : "/preise")
   }, [nutzer, laden, router])
 
   async function mitGoogleAnmelden() {
@@ -35,7 +36,7 @@ export default function LoginPage() {
     }
     try {
       await signInWithPopup(auth, googleProvider)
-      router.push("/")
+      router.push(hatAbo() ? "/" : "/preise")
     } catch {
       setFehler(t("login.fehler.googleFehler"))
     }
@@ -72,7 +73,7 @@ export default function LoginPage() {
       } else {
         await signInWithEmailAndPassword(auth, email, passwort)
       }
-      router.push("/")
+      router.push(hatAbo() ? "/" : "/preise")
     } catch (error: unknown) {
       const code = (error as { code?: string })?.code
       if (code === "auth/email-already-in-use") {
