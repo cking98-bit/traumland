@@ -6,8 +6,22 @@ import { useSprache } from "@/components/LanguageProvider"
 type AudioMitSink = HTMLAudioElement & {
   setSinkId?: (id: string) => Promise<void>
 }
-type MediaDevicesMitAuswahl = MediaDevices & {
-  selectAudioOutput?: () => Promise<MediaDeviceInfo>
+
+function textZuChunks(text: string, maxZeichen = 500): string[] {
+  const absaetze = text.split(/\n+/).filter((p) => p.trim().length > 0)
+  const chunks: string[] = []
+  let aktuell = ""
+  for (const absatz of absaetze) {
+    const kombiniert = aktuell ? aktuell + "\n" + absatz : absatz
+    if (aktuell && kombiniert.length > maxZeichen) {
+      chunks.push(aktuell.trim())
+      aktuell = absatz
+    } else {
+      aktuell = kombiniert
+    }
+  }
+  if (aktuell.trim()) chunks.push(aktuell.trim())
+  return chunks.length > 0 ? chunks : [text]
 }
 
 export default function VorleseButton({ text }: { text: string }) {
@@ -18,83 +32,94 @@ export default function VorleseButton({ text }: { text: string }) {
   const [spielt, setSpielt] = useState(false)
   const [fehler, setFehler] = useState("")
 
-  const [geraetId, setGeraetId] = useState<string | null>(null)
-  const [geraetName, setGeraetName] = useState<string | null>(null)
-
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const abbrechenRef = useRef<AbortController | null>(null)
 
-  const geraeteAuswahlMoeglich =
-    typeof navigator !== "undefined" &&
-    typeof (navigator.mediaDevices as MediaDevicesMitAuswahl)
-      ?.selectAudioOutput === "function"
-
-  async function geraetWaehlen() {
-    setFehler("")
-    try {
-      const md = navigator.mediaDevices as MediaDevicesMitAuswahl
-      const geraet = await md.selectAudioOutput!()
-      setGeraetId(geraet.deviceId)
-      setGeraetName(geraet.label || "✓")
-    } catch {
-      // Abgebrochen – kein harter Fehler
-    }
+  async function holAudio(chunk: string, signal: AbortSignal): Promise<string> {
+    const response = await fetch("/api/vorlesen", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: chunk, geschlecht }),
+      signal,
+    })
+    const data = await response.json()
+    if (data.fehler) throw new Error(data.fehler)
+    return data.audio as string
   }
 
   async function vorlesen() {
     setFehler("")
     setLaden(true)
 
+    const controller = new AbortController()
+    abbrechenRef.current = controller
+    const { signal } = controller
+
     try {
-      const response = await fetch("/api/vorlesen", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, geschlecht }),
-      })
+      const chunks = textZuChunks(text)
 
-      const data = await response.json()
+      // Alle Chunks gleichzeitig generieren
+      const audioPromises = chunks.map((chunk) => holAudio(chunk, signal))
 
-      if (data.fehler) {
-        setFehler(data.fehler)
-        setLaden(false)
-        return
-      }
+      // Warten bis der erste Chunk bereit ist – dann sofort starten
+      const ersteUrl = await audioPromises[0]
+      if (signal.aborted) return
 
-      if (audioRef.current) {
-        audioRef.current.pause()
-      }
-
-      const audio = new Audio(data.audio) as AudioMitSink
-      audioRef.current = audio
-
-      if (geraetId && typeof audio.setSinkId === "function") {
-        try {
-          await audio.setSinkId(geraetId)
-        } catch {
-          setFehler(t("vorlese.fehler.geraet"))
-        }
-      }
-
-      audio.onended = () => setSpielt(false)
-      audio.onerror = () => {
-        setFehler(t("vorlese.fehler.audio"))
-        setSpielt(false)
-      }
-
-      await audio.play()
+      setLaden(false)
       setSpielt(true)
-    } catch {
+
+      async function spieleIndex(idx: number) {
+        if (signal.aborted) return
+
+        // URL des aktuellen Chunks (erster ist bereits bekannt, Rest aus Promise)
+        const url = idx === 0 ? ersteUrl : await audioPromises[idx]
+        if (signal.aborted) return
+
+        if (audioRef.current) audioRef.current.pause()
+
+        const audio = new Audio(url) as AudioMitSink
+        audioRef.current = audio
+
+        audio.onended = () => {
+          if (idx + 1 < chunks.length) {
+            spieleIndex(idx + 1)
+          } else {
+            setSpielt(false)
+          }
+        }
+
+        audio.onerror = () => {
+          if (!signal.aborted) {
+            setFehler(t("vorlese.fehler.audio"))
+            setSpielt(false)
+          }
+        }
+
+        await audio.play().catch(() => {
+          if (!signal.aborted) {
+            setFehler(t("vorlese.fehler.audio"))
+            setSpielt(false)
+          }
+        })
+      }
+
+      spieleIndex(0)
+    } catch (err: unknown) {
+      if ((err as { name?: string })?.name === "AbortError") return
       setFehler(t("vorlese.fehler.verbindung"))
-    } finally {
       setLaden(false)
     }
   }
 
   function stoppen() {
+    abbrechenRef.current?.abort()
+    abbrechenRef.current = null
     if (audioRef.current) {
       audioRef.current.pause()
       audioRef.current.currentTime = 0
     }
     setSpielt(false)
+    setLaden(false)
   }
 
   return (
@@ -128,21 +153,6 @@ export default function VorleseButton({ text }: { text: string }) {
           {t("vorlese.maennlich")}
         </button>
       </div>
-
-      {/* Ausgabegerät */}
-      {geraeteAuswahlMoeglich ? (
-        <button
-          onClick={geraetWaehlen}
-          disabled={spielt}
-          className="w-full bg-indigo-700 hover:bg-indigo-600 text-white text-sm rounded-lg py-2 mb-4 transition disabled:opacity-50"
-        >
-          {t("vorlese.geraet")} {geraetName ?? t("vorlese.geraetStandard")}
-        </button>
-      ) : (
-        <p className="text-indigo-400 text-xs mb-4 text-center">
-          {t("vorlese.geraetHint")}
-        </p>
-      )}
 
       {/* Abspiel-Steuerung */}
       {laden ? (

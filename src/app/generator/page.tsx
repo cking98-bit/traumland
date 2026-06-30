@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { speichereGeschichte, istVoll, MAX_GESCHICHTEN } from "@/lib/geschichten"
+import { speichereGeschichte, speichereBild, istVoll, MAX_GESCHICHTEN } from "@/lib/geschichten"
 import { ladeProfile, berechneAlter, type Profil } from "@/lib/profile"
 import SchutzRoute from "@/components/SchutzRoute"
 import { useSprache } from "@/components/LanguageProvider"
@@ -105,6 +105,20 @@ export default function GeneratorPage() {
         geschichte: data.geschichte,
         sprache: geschichteSprache,
       })
+
+      // Bild sofort im Hintergrund generieren & speichern
+      if (id) {
+        fetch("/api/bild", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ stichwörter, stil: stilText }),
+        })
+          .then((r) => r.json())
+          .then((b) => {
+            if (b.bild) speichereBild(id, b.bild)
+          })
+          .catch(() => {}) // Fehler still ignorieren – Illustration zeigt Fallback
+      }
 
       const params = new URLSearchParams({
         name: ausgewählt!.name,

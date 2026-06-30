@@ -29,30 +29,26 @@ export async function POST(req: NextRequest) {
       await adminDb
         .collection("users")
         .doc(uid)
-        .collection("abo")
-        .doc("aktiv")
         .set({
-          plan,
-          kinder: Number(kinder),
-          status: "aktiv",
-          stripeSubscriptionId: session.subscription,
-          stripeCustomerId: session.customer,
-          aktualisiertAm: new Date().toISOString(),
-        })
+          abo: {
+            plan,
+            kinder: Number(kinder),
+            status: "aktiv",
+            stripeSubscriptionId: session.subscription,
+            stripeCustomerId: session.customer,
+          },
+        }, { merge: true })
     }
   }
 
   if (event.type === "customer.subscription.deleted") {
     const subscription = event.data.object as Stripe.Subscription
-    // Abo in Firestore auf "gekuendigt" setzen
     const uid = subscription.metadata?.uid
     if (uid) {
       await adminDb
         .collection("users")
         .doc(uid)
-        .collection("abo")
-        .doc("aktiv")
-        .update({ status: "gekuendigt" })
+        .set({ abo: { status: "gekuendigt" } }, { merge: true })
     }
   }
 
