@@ -2,10 +2,24 @@
 export type Profil = {
   id: string
   name: string
-  alter: string
+  geburtsdatum: string // ISO-Format: "JJJJ-MM-TT"
 }
 
 const SCHLUESSEL = "traumland_profile"
+
+// Alter aus dem Geburtsdatum berechnen (immer aktuell)
+export function berechneAlter(geburtsdatum: string): number {
+  const geb = new Date(geburtsdatum)
+  if (isNaN(geb.getTime())) return 0
+  const heute = new Date()
+  let alter = heute.getFullYear() - geb.getFullYear()
+  const monatsDiff = heute.getMonth() - geb.getMonth()
+  // Geburtstag dieses Jahr noch nicht erreicht? → 1 Jahr abziehen
+  if (monatsDiff < 0 || (monatsDiff === 0 && heute.getDate() < geb.getDate())) {
+    alter--
+  }
+  return Math.max(0, alter)
+}
 
 export function ladeProfile(): Profil[] {
   if (typeof window === "undefined") return []

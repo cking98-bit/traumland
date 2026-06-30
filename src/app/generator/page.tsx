@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { speichereGeschichte, istVoll, MAX_GESCHICHTEN } from "@/lib/geschichten"
-import { ladeProfile, type Profil } from "@/lib/profile"
+import { ladeProfile, berechneAlter, type Profil } from "@/lib/profile"
 import SchutzRoute from "@/components/SchutzRoute"
 
 const STILE = [
@@ -66,13 +66,16 @@ export default function GeneratorPage() {
     setFehler("")
     setLaden(true)
 
+    // Alter automatisch aus dem Geburtsdatum des Kindes berechnen
+    const alter = String(berechneAlter(ausgewählt!.geburtsdatum))
+
     try {
       const response = await fetch("/api/geschichte", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: ausgewählt!.name,
-          alter: ausgewählt!.alter,
+          alter,
           stichwörter,
           stile: stil.join(", "),
           dauer,
@@ -90,7 +93,7 @@ export default function GeneratorPage() {
       const stilText = stil.join(", ")
       const id = speichereGeschichte({
         name: ausgewählt!.name,
-        alter: ausgewählt!.alter,
+        alter,
         stichwörter,
         stil: stilText,
         dauer,
@@ -99,7 +102,7 @@ export default function GeneratorPage() {
 
       const params = new URLSearchParams({
         name: ausgewählt!.name,
-        alter: ausgewählt!.alter,
+        alter,
         stichwörter,
         stil: stilText,
         dauer,
@@ -190,7 +193,7 @@ export default function GeneratorPage() {
               >
                 {profile.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} ({p.alter} Jahre)
+                    {p.name} ({berechneAlter(p.geburtsdatum)} Jahre)
                   </option>
                 ))}
               </select>

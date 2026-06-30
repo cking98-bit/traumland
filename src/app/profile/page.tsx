@@ -6,14 +6,18 @@ import {
   ladeProfile,
   speichereProfil,
   loescheProfil,
+  berechneAlter,
   type Profil,
 } from "@/lib/profile"
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profil[]>([])
   const [name, setName] = useState("")
-  const [alter, setAlter] = useState("5")
+  const [geburtsdatum, setGeburtsdatum] = useState("")
   const [fehler, setFehler] = useState("")
+
+  // Heutiges Datum als Obergrenze (kein Geburtsdatum in der Zukunft)
+  const heute = new Date().toISOString().split("T")[0]
 
   useEffect(() => {
     setProfile(ladeProfile())
@@ -24,10 +28,19 @@ export default function ProfilePage() {
       setFehler("Bitte gib einen Namen ein.")
       return
     }
-    speichereProfil({ name: name.trim(), alter })
+    if (!geburtsdatum) {
+      setFehler("Bitte gib das Geburtsdatum an.")
+      return
+    }
+    const alter = berechneAlter(geburtsdatum)
+    if (alter > 12) {
+      setFehler("Die Geschichten sind für Kinder bis ca. 8 Jahre gedacht.")
+      return
+    }
+    speichereProfil({ name: name.trim(), geburtsdatum })
     setProfile(ladeProfile())
     setName("")
-    setAlter("5")
+    setGeburtsdatum("")
     setFehler("")
   }
 
@@ -41,8 +54,8 @@ export default function ProfilePage() {
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-2">👧 Kinder-Profile</h1>
         <p className="text-indigo-300 mb-8">
-          Lege für jedes Kind ein Profil an – so wird jede Geschichte perfekt
-          personalisiert.
+          Lege für jedes Kind ein Profil an – das Alter berechnen wir automatisch
+          aus dem Geburtsdatum.
         </p>
 
         {/* Neues Profil anlegen */}
@@ -55,25 +68,38 @@ export default function ProfilePage() {
             </div>
           )}
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Name des Kindes"
-              className="flex-1 bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
-            />
-            <select
-              value={alter}
-              onChange={(e) => setAlter(e.target.value)}
-              className="bg-indigo-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
-            >
-              {[2, 3, 4, 5, 6, 7, 8].map((a) => (
-                <option key={a} value={a}>
-                  {a} Jahre
-                </option>
-              ))}
-            </select>
+          <div className="flex flex-col gap-3">
+            <div>
+              <label className="text-white text-sm font-medium block mb-2">
+                Name des Kindes
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="z.B. Emma"
+                className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
+              />
+            </div>
+
+            <div>
+              <label className="text-white text-sm font-medium block mb-2">
+                Geburtsdatum
+              </label>
+              <input
+                type="date"
+                value={geburtsdatum}
+                max={heute}
+                onChange={(e) => setGeburtsdatum(e.target.value)}
+                className="w-full bg-indigo-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
+              />
+              {geburtsdatum && (
+                <p className="text-indigo-400 text-xs mt-2">
+                  Aktuelles Alter: {berechneAlter(geburtsdatum)} Jahre
+                </p>
+              )}
+            </div>
+
             <button
               onClick={hinzufuegen}
               className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-6 py-3 rounded-xl transition"
@@ -104,7 +130,9 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <p className="text-white font-bold">{p.name}</p>
-                    <p className="text-indigo-400 text-sm">{p.alter} Jahre</p>
+                    <p className="text-indigo-400 text-sm">
+                      {berechneAlter(p.geburtsdatum)} Jahre
+                    </p>
                   </div>
                 </div>
                 <button
