@@ -6,6 +6,7 @@ import Link from "next/link"
 import { speichereGeschichte, istVoll, MAX_GESCHICHTEN } from "@/lib/geschichten"
 import { ladeProfile, berechneAlter, type Profil } from "@/lib/profile"
 import SchutzRoute from "@/components/SchutzRoute"
+import { hatAbo } from "@/lib/abo"
 
 const STILE = [
   { id: "abenteuer", label: "Abenteuer 🗺️" },
@@ -32,11 +33,21 @@ export default function GeneratorPage() {
   const [dauer, setDauer] = useState("5")
   const [laden, setLaden] = useState(false)
   const [fehler, setFehler] = useState("")
+  const [abo, setAbo] = useState(true)
 
   useEffect(() => {
+    setAbo(hatAbo())
     const geladen = ladeProfile()
     setProfile(geladen)
-    if (geladen.length > 0) setProfilId(geladen[0].id)
+
+    // Kind aus dem Link (?kind=...) vorauswählen, sonst erstes Profil
+    const params = new URLSearchParams(window.location.search)
+    const kindId = params.get("kind")
+    if (kindId && geladen.some((p) => p.id === kindId)) {
+      setProfilId(kindId)
+    } else if (geladen.length > 0) {
+      setProfilId(geladen[0].id)
+    }
   }, [])
 
   const ausgewählt = profile.find((p) => p.id === profilId)
@@ -150,8 +161,24 @@ export default function GeneratorPage() {
           Erzähl uns von deinem Kind – wir zaubern eine einzigartige Geschichte!
         </p>
 
-        {/* Kein Profil vorhanden → zuerst anlegen */}
-        {profile.length === 0 ? (
+        {/* Kein Abo → erst Plan wählen */}
+        {!abo ? (
+          <div className="bg-indigo-900 rounded-2xl p-10 text-center">
+            <div className="text-6xl mb-4">🔒</div>
+            <h2 className="text-white text-xl font-bold mb-2">
+              Erst einen Plan wählen
+            </h2>
+            <p className="text-indigo-300 mb-6">
+              Um Geschichten zu erstellen, brauchst du ein aktives Abo.
+            </p>
+            <Link
+              href="/preise"
+              className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-8 py-3 rounded-xl transition inline-block"
+            >
+              Pläne ansehen 💎
+            </Link>
+          </div>
+        ) : profile.length === 0 ? (
           <div className="bg-indigo-900 rounded-2xl p-10 text-center">
             <div className="text-5xl mb-3">👧</div>
             <h2 className="text-white text-xl font-bold mb-2">

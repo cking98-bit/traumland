@@ -14,22 +14,18 @@ export default function Navigation() {
   const { nutzer } = useAuth()
   const { t } = useSprache()
 
-  // Diese Links sieht jeder
-  const oeffentlicheLinks = [
-    { href: "/", label: t("nav.start") },
-    { href: "/preise", label: t("nav.preise") },
-  ]
-
-  // Diese Links nur nach Anmeldung
-  const privateLinks = [
-    { href: "/generator", label: t("nav.neu") },
-    { href: "/bibliothek", label: t("nav.bibliothek") },
-    { href: "/profile", label: t("nav.profile") },
-  ]
-
+  // Eingeloggt: App-Bereiche (kein Pricing mehr). Ausgeloggt: Start + Preise.
   const links = nutzer
-    ? [...oeffentlicheLinks, ...privateLinks]
-    : oeffentlicheLinks
+    ? [
+        { href: "/", label: t("nav.start") },
+        { href: "/generator", label: t("nav.neu") },
+        { href: "/bibliothek", label: t("nav.bibliothek") },
+        { href: "/profile", label: t("nav.profile") },
+      ]
+    : [
+        { href: "/", label: t("nav.start") },
+        { href: "/preise", label: t("nav.preise") },
+      ]
 
   async function abmelden() {
     if (auth) await signOut(auth)

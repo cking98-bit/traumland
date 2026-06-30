@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useSprache } from "@/components/LanguageProvider"
+import { setzeAbo } from "@/lib/abo"
 import type { Sprache } from "@/lib/i18n"
 
 type Plan = {
@@ -80,6 +81,7 @@ function euro(n: number, sprache: Sprache) {
 
 function PlanKarte({ plan }: { plan: Plan }) {
   const { t, sprache } = useSprache()
+  const router = useRouter()
   const [kinder, setKinder] = useState(1)
 
   const gesamtPreis = plan.basisPreis + (kinder - 1) * plan.proKind
@@ -158,11 +160,11 @@ function PlanKarte({ plan }: { plan: Plan }) {
       </ul>
 
       <button
-        onClick={() =>
-          alert(
-            `${t(plan.nameKey)} · ${kinder} – ${euro(gesamtPreis, sprache)}/${periode}\n\n${t("preise.stripeHinweis")}`
-          )
-        }
+        onClick={() => {
+          // Simuliertes Abo aktivieren (wird später durch Stripe ersetzt)
+          setzeAbo(plan.id, kinder)
+          router.push("/profile")
+        }}
         className={`w-full font-bold py-3 rounded-xl transition ${
           plan.beliebt
             ? "bg-yellow-400 hover:bg-yellow-300 text-indigo-950"
@@ -185,20 +187,6 @@ export default function PreisePage() {
         <p className="text-indigo-300 text-lg max-w-xl mx-auto">
           {t("preise.untertitel")}
         </p>
-      </div>
-
-      {/* Gratis-Schnupper Banner */}
-      <div className="bg-indigo-900 border border-indigo-700 rounded-2xl p-5 mb-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="text-center sm:text-left">
-          <p className="text-white font-bold">{t("preise.banner.titel")}</p>
-          <p className="text-indigo-300 text-sm">{t("preise.banner.text")}</p>
-        </div>
-        <Link
-          href="/login"
-          className="bg-indigo-700 hover:bg-indigo-600 text-white font-bold px-6 py-3 rounded-xl text-sm whitespace-nowrap transition"
-        >
-          {t("preise.banner.cta")}
-        </Link>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
