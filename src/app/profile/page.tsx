@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import SchutzRoute from "@/components/SchutzRoute"
+import { useSprache } from "@/components/LanguageProvider"
 import {
   ladeProfile,
   speichereProfil,
@@ -10,14 +11,24 @@ import {
   type Profil,
 } from "@/lib/profile"
 
+const pad = (n: string) => n.padStart(2, "0")
+
 export default function ProfilePage() {
+  const { t } = useSprache()
+
   const [profile, setProfile] = useState<Profil[]>([])
   const [name, setName] = useState("")
-  const [geburtsdatum, setGeburtsdatum] = useState("")
+  const [tag, setTag] = useState("")
+  const [monat, setMonat] = useState("")
+  const [jahr, setJahr] = useState("")
   const [fehler, setFehler] = useState("")
 
-  // Heutiges Datum als Obergrenze (kein Geburtsdatum in der Zukunft)
-  const heute = new Date().toISOString().split("T")[0]
+  const aktuellesJahr = new Date().getFullYear()
+  const jahre = Array.from({ length: 13 }, (_, i) => aktuellesJahr - i) // bis 12 Jahre zurück
+
+  // Vollständiges Geburtsdatum (ISO) wenn alle drei Felder gesetzt sind
+  const geburtsdatum =
+    tag && monat && jahr ? `${jahr}-${pad(monat)}-${pad(tag)}` : ""
 
   useEffect(() => {
     setProfile(ladeProfile())
@@ -25,22 +36,23 @@ export default function ProfilePage() {
 
   function hinzufuegen() {
     if (!name.trim()) {
-      setFehler("Bitte gib einen Namen ein.")
+      setFehler(t("profil.fehler.name"))
       return
     }
     if (!geburtsdatum) {
-      setFehler("Bitte gib das Geburtsdatum an.")
+      setFehler(t("profil.fehler.datum"))
       return
     }
-    const alter = berechneAlter(geburtsdatum)
-    if (alter > 12) {
-      setFehler("Die Geschichten sind für Kinder bis ca. 8 Jahre gedacht.")
+    if (berechneAlter(geburtsdatum) > 12) {
+      setFehler(t("profil.fehler.alt"))
       return
     }
     speichereProfil({ name: name.trim(), geburtsdatum })
     setProfile(ladeProfile())
     setName("")
-    setGeburtsdatum("")
+    setTag("")
+    setMonat("")
+    setJahr("")
     setFehler("")
   }
 
@@ -49,18 +61,18 @@ export default function ProfilePage() {
     setProfile(ladeProfile())
   }
 
+  const selectClass =
+    "bg-indigo-800 text-white rounded-xl px-3 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
+
   return (
     <SchutzRoute>
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-2">👧 Kinder-Profile</h1>
-        <p className="text-indigo-300 mb-8">
-          Lege für jedes Kind ein Profil an – das Alter berechnen wir automatisch
-          aus dem Geburtsdatum.
-        </p>
+        <h1 className="text-3xl font-bold text-white mb-2">{t("profil.titel")}</h1>
+        <p className="text-indigo-300 mb-8">{t("profil.untertitel")}</p>
 
         {/* Neues Profil anlegen */}
         <div className="bg-indigo-900 rounded-2xl p-6 mb-8">
-          <h2 className="text-white font-bold mb-4">Neues Kind hinzufügen</h2>
+          <h2 className="text-white font-bold mb-4">{t("profil.neu")}</h2>
 
           {fehler && (
             <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-xl px-4 py-3 text-sm mb-4">
@@ -68,34 +80,73 @@ export default function ProfilePage() {
             </div>
           )}
 
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             <div>
               <label className="text-white text-sm font-medium block mb-2">
-                Name des Kindes
+                {t("profil.name")}
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="z.B. Emma"
+                placeholder="z.B. Anna"
                 className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
               />
             </div>
 
             <div>
               <label className="text-white text-sm font-medium block mb-2">
-                Geburtsdatum
+                {t("profil.geburtsdatum")}{" "}
+                <span className="text-indigo-400 text-xs">(TT.MM.JJJJ)</span>
               </label>
-              <input
-                type="date"
-                value={geburtsdatum}
-                max={heute}
-                onChange={(e) => setGeburtsdatum(e.target.value)}
-                className="w-full bg-indigo-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
-              />
+              <div className="grid grid-cols-3 gap-3">
+                {/* Tag */}
+                <select
+                  value={tag}
+                  onChange={(e) => setTag(e.target.value)}
+                  className={selectClass}
+                >
+                  <option value="">{t("profil.tag")}</option>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                    <option key={d} value={String(d)}>
+                      {pad(String(d))}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Monat */}
+                <select
+                  value={monat}
+                  onChange={(e) => setMonat(e.target.value)}
+                  className={selectClass}
+                >
+                  <option value="">{t("profil.monat")}</option>
+                  {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                    <option key={m} value={String(m)}>
+                      {pad(String(m))}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Jahr */}
+                <select
+                  value={jahr}
+                  onChange={(e) => setJahr(e.target.value)}
+                  className={selectClass}
+                >
+                  <option value="">{t("profil.jahr")}</option>
+                  {jahre.map((j) => (
+                    <option key={j} value={String(j)}>
+                      {j}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {geburtsdatum && (
                 <p className="text-indigo-400 text-xs mt-2">
-                  Aktuelles Alter: {berechneAlter(geburtsdatum)} Jahre
+                  {t("profil.aktuellesAlter")}: {berechneAlter(geburtsdatum)}{" "}
+                  {t("profil.jahre")}
                 </p>
               )}
             </div>
@@ -104,7 +155,7 @@ export default function ProfilePage() {
               onClick={hinzufuegen}
               className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-6 py-3 rounded-xl transition"
             >
-              Hinzufügen
+              {t("profil.hinzufuegen")}
             </button>
           </div>
         </div>
@@ -113,9 +164,7 @@ export default function ProfilePage() {
         {profile.length === 0 ? (
           <div className="bg-indigo-900 rounded-2xl p-10 text-center">
             <div className="text-5xl mb-3">🧸</div>
-            <p className="text-indigo-300">
-              Noch keine Profile – füge oben dein erstes Kind hinzu.
-            </p>
+            <p className="text-indigo-300">{t("profil.leer")}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -131,7 +180,7 @@ export default function ProfilePage() {
                   <div>
                     <p className="text-white font-bold">{p.name}</p>
                     <p className="text-indigo-400 text-sm">
-                      {berechneAlter(p.geburtsdatum)} Jahre
+                      {berechneAlter(p.geburtsdatum)} {t("profil.jahre")}
                     </p>
                   </div>
                 </div>
@@ -139,7 +188,7 @@ export default function ProfilePage() {
                   onClick={() => entfernen(p.id)}
                   className="bg-indigo-800 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm transition"
                 >
-                  🗑 Entfernen
+                  {t("profil.entfernen")}
                 </button>
               </div>
             ))}

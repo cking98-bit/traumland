@@ -9,10 +9,12 @@ import {
 import { auth, googleProvider } from "@/lib/firebase"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/AuthProvider"
+import { useSprache } from "@/components/LanguageProvider"
 
 export default function LoginPage() {
   const router = useRouter()
   const { nutzer, laden } = useAuth()
+  const { t } = useSprache()
 
   const [modus, setModus] = useState<"login" | "registrieren">("login")
   const [email, setEmail] = useState("")
@@ -28,14 +30,14 @@ export default function LoginPage() {
   async function mitGoogleAnmelden() {
     setFehler("")
     if (!auth) {
-      setFehler("Anmeldedienst ist nicht verfügbar. Bitte später erneut versuchen.")
+      setFehler(t("login.fehler.nichtVerfuegbar"))
       return
     }
     try {
       await signInWithPopup(auth, googleProvider)
       router.push("/")
     } catch {
-      setFehler("Google-Anmeldung fehlgeschlagen. Bitte versuche es erneut.")
+      setFehler(t("login.fehler.googleFehler"))
     }
   }
 
@@ -43,23 +45,23 @@ export default function LoginPage() {
     setFehler("")
 
     if (!email || !passwort) {
-      setFehler("Bitte E-Mail und Passwort eingeben.")
+      setFehler(t("login.fehler.felder"))
       return
     }
 
     if (modus === "registrieren") {
       if (passwort.length < 6) {
-        setFehler("Das Passwort muss mindestens 6 Zeichen lang sein.")
+        setFehler(t("login.fehler.passwortKurz"))
         return
       }
       if (passwort !== passwortWiederholen) {
-        setFehler("Die Passwörter stimmen nicht überein.")
+        setFehler(t("login.fehler.passwortUngleich"))
         return
       }
     }
 
     if (!auth) {
-      setFehler("Anmeldedienst ist nicht verfügbar. Bitte später erneut versuchen.")
+      setFehler(t("login.fehler.nichtVerfuegbar"))
       return
     }
 
@@ -74,13 +76,17 @@ export default function LoginPage() {
     } catch (error: unknown) {
       const code = (error as { code?: string })?.code
       if (code === "auth/email-already-in-use") {
-        setFehler("Diese E-Mail ist bereits registriert. Bitte anmelden.")
-      } else if (code === "auth/user-not-found" || code === "auth/wrong-password" || code === "auth/invalid-credential") {
-        setFehler("E-Mail oder Passwort falsch.")
+        setFehler(t("login.fehler.emailVergeben"))
+      } else if (
+        code === "auth/user-not-found" ||
+        code === "auth/wrong-password" ||
+        code === "auth/invalid-credential"
+      ) {
+        setFehler(t("login.fehler.falsch"))
       } else if (code === "auth/invalid-email") {
-        setFehler("Bitte eine gültige E-Mail-Adresse eingeben.")
+        setFehler(t("login.fehler.emailUngueltig"))
       } else {
-        setFehler("Ein Fehler ist aufgetreten. Bitte versuche es erneut.")
+        setFehler(t("login.fehler.allgemein"))
       }
     } finally {
       setLadevorgang(false)
@@ -93,12 +99,10 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="text-6xl mb-4">🌙</div>
           <h1 className="text-3xl font-bold text-white mb-2">
-            {modus === "login" ? "Willkommen zurück" : "Konto erstellen"}
+            {modus === "login" ? t("login.willkommen") : t("login.kontoErstellen")}
           </h1>
           <p className="text-indigo-300">
-            {modus === "login"
-              ? "Melde dich an um deine Geschichten zu sehen"
-              : "Erstelle ein Konto um loszulegen"}
+            {modus === "login" ? t("login.subLogin") : t("login.subRegister")}
           </p>
         </div>
 
@@ -113,13 +117,13 @@ export default function LoginPage() {
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
           </svg>
-          Mit Google {modus === "login" ? "anmelden" : "registrieren"}
+          {modus === "login" ? t("login.google.login") : t("login.google.register")}
         </button>
 
         {/* Trennlinie */}
         <div className="flex items-center gap-3 mb-6">
           <div className="flex-1 h-px bg-indigo-700" />
-          <span className="text-indigo-400 text-sm">oder</span>
+          <span className="text-indigo-400 text-sm">{t("login.oder")}</span>
           <div className="flex-1 h-px bg-indigo-700" />
         </div>
 
@@ -134,26 +138,26 @@ export default function LoginPage() {
         <div className="flex flex-col gap-4">
           <div>
             <label className="text-white text-sm font-medium block mb-2">
-              E-Mail
+              {t("login.email")}
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="deine@email.de"
+              placeholder="anna@email.com"
               className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
             />
           </div>
 
           <div>
             <label className="text-white text-sm font-medium block mb-2">
-              Passwort
+              {t("login.passwort")}
             </label>
             <input
               type="password"
               value={passwort}
               onChange={(e) => setPasswort(e.target.value)}
-              placeholder="Mindestens 6 Zeichen"
+              placeholder={t("login.passwortPlaceholder")}
               className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
             />
           </div>
@@ -161,13 +165,13 @@ export default function LoginPage() {
           {modus === "registrieren" && (
             <div>
               <label className="text-white text-sm font-medium block mb-2">
-                Passwort wiederholen
+                {t("login.passwortWiederholen")}
               </label>
               <input
                 type="password"
                 value={passwortWiederholen}
                 onChange={(e) => setPasswortWiederholen(e.target.value)}
-                placeholder="Passwort nochmal eingeben"
+                placeholder={t("login.passwortWiederholenPlaceholder")}
                 className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
               />
             </div>
@@ -179,10 +183,10 @@ export default function LoginPage() {
             className="w-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 text-indigo-950 font-bold py-3 rounded-xl transition"
           >
             {ladevorgang
-              ? "Bitte warten..."
+              ? t("login.bitteWarten")
               : modus === "login"
-              ? "Anmelden"
-              : "Konto erstellen"}
+              ? t("login.btnLogin")
+              : t("login.btnRegister")}
           </button>
         </div>
 
@@ -190,22 +194,28 @@ export default function LoginPage() {
         <p className="text-indigo-400 text-sm text-center mt-6">
           {modus === "login" ? (
             <>
-              Noch kein Konto?{" "}
+              {t("login.keinKonto")}{" "}
               <button
-                onClick={() => { setModus("registrieren"); setFehler("") }}
+                onClick={() => {
+                  setModus("registrieren")
+                  setFehler("")
+                }}
                 className="text-yellow-400 hover:text-yellow-300 font-medium"
               >
-                Jetzt registrieren
+                {t("login.jetztRegistrieren")}
               </button>
             </>
           ) : (
             <>
-              Bereits registriert?{" "}
+              {t("login.bereitsKonto")}{" "}
               <button
-                onClick={() => { setModus("login"); setFehler("") }}
+                onClick={() => {
+                  setModus("login")
+                  setFehler("")
+                }}
                 className="text-yellow-400 hover:text-yellow-300 font-medium"
               >
-                Jetzt anmelden
+                {t("login.jetztAnmelden")}
               </button>
             </>
           )}
