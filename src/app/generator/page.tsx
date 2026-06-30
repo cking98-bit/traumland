@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { speichereGeschichte, istVoll, MAX_GESCHICHTEN } from "@/lib/geschichten"
-import SchutzRoute from "@/components/Schutzroute"
+import { ladeProfile, type Profil } from "@/lib/profile"
+import SchutzRoute from "@/components/SchutzRoute"
 
 const STILE = [
   { id: "abenteuer", label: "Abenteuer 🗺️" },
@@ -23,13 +25,21 @@ const DAUER = [
 export default function GeneratorPage() {
   const router = useRouter()
 
-  const [name, setName] = useState("")
-  const [alter, setAlter] = useState("5")
+  const [profile, setProfile] = useState<Profil[]>([])
+  const [profilId, setProfilId] = useState("")
   const [stichwörter, setStichwörter] = useState("")
   const [stil, setStil] = useState<string[]>([])
   const [dauer, setDauer] = useState("5")
   const [laden, setLaden] = useState(false)
   const [fehler, setFehler] = useState("")
+
+  useEffect(() => {
+    const geladen = ladeProfile()
+    setProfile(geladen)
+    if (geladen.length > 0) setProfilId(geladen[0].id)
+  }, [])
+
+  const ausgewählt = profile.find((p) => p.id === profilId)
 
   function toggleStil(id: string) {
     setStil((prev) =>
@@ -40,7 +50,7 @@ export default function GeneratorPage() {
   function validieren() {
     if (istVoll())
       return `Deine Bibliothek ist voll (max. ${MAX_GESCHICHTEN} Geschichten). Bitte lösche zuerst eine Geschichte.`
-    if (!name.trim()) return "Bitte gib den Namen deines Kindes ein."
+    if (!ausgewählt) return "Bitte wähle ein Kind aus."
     if (!stichwörter.trim()) return "Bitte gib mindestens ein Stichwort ein."
     if (stil.length === 0) return "Bitte wähle mindestens einen Geschichte-Stil aus."
     return ""
@@ -61,8 +71,8 @@ export default function GeneratorPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name,
-          alter,
+          name: ausgewählt!.name,
+          alter: ausgewählt!.alter,
           stichwörter,
           stile: stil.join(", "),
           dauer,
@@ -79,8 +89,8 @@ export default function GeneratorPage() {
 
       const stilText = stil.join(", ")
       const id = speichereGeschichte({
-        name,
-        alter,
+        name: ausgewählt!.name,
+        alter: ausgewählt!.alter,
         stichwörter,
         stil: stilText,
         dauer,
@@ -88,8 +98,8 @@ export default function GeneratorPage() {
       })
 
       const params = new URLSearchParams({
-        name,
-        alter,
+        name: ausgewählt!.name,
+        alter: ausgewählt!.alter,
         stichwörter,
         stil: stilText,
         dauer,
@@ -137,115 +147,137 @@ export default function GeneratorPage() {
           Erzähl uns von deinem Kind – wir zaubern eine einzigartige Geschichte!
         </p>
 
-        <div className="bg-indigo-900 rounded-2xl p-8 flex flex-col gap-6">
-          {fehler && (
-            <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-xl px-4 py-3 text-sm">
-              {fehler}{" "}
-              {istVoll() && (
-                <a href="/bibliothek" className="underline font-bold">
-                  Zur Bibliothek →
-                </a>
-              )}
-            </div>
-          )}
-
-          <div>
-            <label className="text-white font-medium block mb-2">
-              Name des Kindes
-            </label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="z.B. Anna"
-              className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
-            />
-          </div>
-
-          <div>
-            <label className="text-white font-medium block mb-2">Alter</label>
-            <select
-              value={alter}
-              onChange={(e) => setAlter(e.target.value)}
-              className="w-full bg-indigo-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
+        {/* Kein Profil vorhanden → zuerst anlegen */}
+        {profile.length === 0 ? (
+          <div className="bg-indigo-900 rounded-2xl p-10 text-center">
+            <div className="text-5xl mb-3">👧</div>
+            <h2 className="text-white text-xl font-bold mb-2">
+              Lege zuerst ein Kinder-Profil an
+            </h2>
+            <p className="text-indigo-300 mb-6">
+              Damit wir Geschichten personalisieren können, brauchen wir den Namen
+              und das Alter deines Kindes.
+            </p>
+            <Link
+              href="/profile"
+              className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-8 py-3 rounded-xl transition inline-block"
             >
-              {[2, 3, 4, 5, 6, 7, 8].map((age) => (
-                <option key={age} value={age}>
-                  {age} Jahre
-                </option>
-              ))}
-            </select>
+              Profil anlegen 👧
+            </Link>
           </div>
+        ) : (
+          <div className="bg-indigo-900 rounded-2xl p-8 flex flex-col gap-6">
+            {fehler && (
+              <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-xl px-4 py-3 text-sm">
+                {fehler}{" "}
+                {istVoll() && (
+                  <a href="/bibliothek" className="underline font-bold">
+                    Zur Bibliothek →
+                  </a>
+                )}
+              </div>
+            )}
 
-          <div>
-            <label className="text-white font-medium block mb-2">
-              Stichwörter{" "}
-              <span className="text-indigo-400 text-sm">
-                (was liebt dein Kind?)
-              </span>
-            </label>
-            <input
-              type="text"
-              value={stichwörter}
-              onChange={(e) => setStichwörter(e.target.value)}
-              placeholder="z.B. Drachen, Weltall, Fußball"
-              className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
-            />
-          </div>
-
-          <div>
-            <label className="text-white font-medium block mb-2">
-              Geschichte-Stil{" "}
-              <span className="text-indigo-400 text-sm">(mehrere auswählbar)</span>
-            </label>
-            <div className="grid grid-cols-3 gap-3">
-              {STILE.map((s) => (
-                <button
-                  key={s.id}
-                  onClick={() => toggleStil(s.id)}
-                  className={`rounded-xl py-3 text-sm font-medium transition ${
-                    stil.includes(s.id)
-                      ? "bg-yellow-400 text-indigo-950"
-                      : "bg-indigo-800 hover:bg-indigo-700 text-white"
-                  }`}
-                >
-                  {s.label}
-                </button>
-              ))}
+            {/* Kind auswählen */}
+            <div>
+              <label className="text-white font-medium block mb-2">
+                Für welches Kind?
+              </label>
+              <select
+                value={profilId}
+                onChange={(e) => setProfilId(e.target.value)}
+                className="w-full bg-indigo-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
+              >
+                {profile.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.alter} Jahre)
+                  </option>
+                ))}
+              </select>
+              <p className="text-indigo-400 text-xs mt-2">
+                Weitere Kinder im{" "}
+                <Link href="/profile" className="underline">
+                  Profil-Bereich
+                </Link>{" "}
+                hinzufügen.
+              </p>
             </div>
-          </div>
 
-          <div>
-            <label className="text-white font-medium block mb-2">
-              Dauer{" "}
-              <span className="text-indigo-400 text-sm">
-                (wie lange soll vorgelesen werden?)
-              </span>
-            </label>
-            <div className="grid grid-cols-3 gap-3">
-              {DAUER.map((d) => (
-                <button
-                  key={d.id}
-                  onClick={() => setDauer(d.id)}
-                  className={`rounded-xl py-3 text-sm font-medium transition ${
-                    dauer === d.id
-                      ? "bg-yellow-400 text-indigo-950"
-                      : "bg-indigo-800 hover:bg-indigo-700 text-white"
-                  }`}
-                >
-                  {d.label}
-                </button>
-              ))}
+            {/* Stichwörter */}
+            <div>
+              <label className="text-white font-medium block mb-2">
+                Stichwörter{" "}
+                <span className="text-indigo-400 text-sm">
+                  (was liebt dein Kind?)
+                </span>
+              </label>
+              <input
+                type="text"
+                value={stichwörter}
+                onChange={(e) => setStichwörter(e.target.value)}
+                placeholder="z.B. Drachen, Weltall, Fußball"
+                className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
+              />
             </div>
-          </div>
 
-          <button
-            onClick={handleSubmit}
-            className="w-full bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-4 rounded-xl text-lg transition mt-2"
-          >
-            Geschichte generieren ✨
-          </button>
-        </div>
+            {/* Stil */}
+            <div>
+              <label className="text-white font-medium block mb-2">
+                Geschichte-Stil{" "}
+                <span className="text-indigo-400 text-sm">
+                  (mehrere auswählbar)
+                </span>
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                {STILE.map((s) => (
+                  <button
+                    key={s.id}
+                    onClick={() => toggleStil(s.id)}
+                    className={`rounded-xl py-3 text-sm font-medium transition ${
+                      stil.includes(s.id)
+                        ? "bg-yellow-400 text-indigo-950"
+                        : "bg-indigo-800 hover:bg-indigo-700 text-white"
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Dauer */}
+            <div>
+              <label className="text-white font-medium block mb-2">
+                Dauer{" "}
+                <span className="text-indigo-400 text-sm">
+                  (wie lange soll vorgelesen werden?)
+                </span>
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                {DAUER.map((d) => (
+                  <button
+                    key={d.id}
+                    onClick={() => setDauer(d.id)}
+                    className={`rounded-xl py-3 text-sm font-medium transition ${
+                      dauer === d.id
+                        ? "bg-yellow-400 text-indigo-950"
+                        : "bg-indigo-800 hover:bg-indigo-700 text-white"
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              className="w-full bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-4 rounded-xl text-lg transition mt-2"
+            >
+              Geschichte generieren ✨
+            </button>
+          </div>
+        )}
       </div>
     </SchutzRoute>
   )

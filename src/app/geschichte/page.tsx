@@ -1,7 +1,7 @@
 import Link from "next/link"
 import VorleseButton from "@/components/VorleseButton"
 import Illustration from "@/components/Illustration"
-import SchutzRoute from "@/components/Schutzroute"
+import SchutzRoute from "@/components/SchutzRoute"
 
 export default async function GeschichtePage({
   searchParams,

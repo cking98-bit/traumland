@@ -11,12 +11,22 @@ export default function Navigation() {
   const router = useRouter()
   const { nutzer } = useAuth()
 
-  const links = [
+  // Diese Links sieht jeder
+  const oeffentlicheLinks = [
     { href: "/", label: "🏠 Start" },
-    { href: "/generator", label: "✨ Neue Geschichte" },
-    { href: "/bibliothek", label: "📚 Bibliothek" },
     { href: "/preise", label: "💎 Preise" },
   ]
+
+  // Diese Links nur nach Anmeldung
+  const privateLinks = [
+    { href: "/generator", label: "✨ Neue Geschichte" },
+    { href: "/bibliothek", label: "📚 Bibliothek" },
+    { href: "/profile", label: "👧 Profile" },
+  ]
+
+  const links = nutzer
+    ? [...oeffentlicheLinks, ...privateLinks]
+    : oeffentlicheLinks
 
   async function abmelden() {
     if (auth) await signOut(auth)

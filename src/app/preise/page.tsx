@@ -6,11 +6,11 @@ import Link from "next/link"
 type Plan = {
   id: string
   name: string
-  basisPreis: number // pro Abrechnungszeitraum
-  proKind: number // Aufpreis je weiteres Kind
+  basisPreis: number
+  proKind: number
   periode: string // "Monat" | "Jahr"
-  basisGeschichten: number // pro Monat, inkl. 1 Kind
-  proKindGeschichten: number // zusätzliche Geschichten je weiteres Kind
+  basisGeschichten: number
+  proKindGeschichten: number
   hinweis?: string
   beliebt?: boolean
   features: string[]
@@ -20,14 +20,14 @@ const PLAENE: Plan[] = [
   {
     id: "light",
     name: "Light",
-    basisPreis: 7.99,
-    proKind: 3.99,
+    basisPreis: 10.99,
+    proKind: 6.99,
     periode: "Monat",
-    basisGeschichten: 15,
-    proKindGeschichten: 10,
+    basisGeschichten: 30,
+    proKindGeschichten: 30,
     features: [
       "Eigenes Profil pro Kind",
-      "Alle Längen (2, 5 & 10 Min)",
+      "Geschichten bis 5 Minuten",
       "KI-Illustrationen",
       "Vorlesen (männlich & weiblich)",
       "Persönliche Bibliothek",
@@ -36,15 +36,15 @@ const PLAENE: Plan[] = [
   {
     id: "familie",
     name: "Familie",
-    basisPreis: 11.99,
-    proKind: 4.99,
+    basisPreis: 13.99,
+    proKind: 8.99,
     periode: "Monat",
     basisGeschichten: 30,
-    proKindGeschichten: 15,
+    proKindGeschichten: 30,
     beliebt: true,
     features: [
       "Eigenes Profil pro Kind",
-      "Alle Längen (2, 5 & 10 Min)",
+      "Alle Längen – bis 10 Minuten",
       "KI-Illustrationen",
       "Vorlesen (männlich & weiblich)",
       "Persönliche Bibliothek",
@@ -54,16 +54,16 @@ const PLAENE: Plan[] = [
   {
     id: "familie-jahr",
     name: "Familie · Jahr",
-    basisPreis: 79.99,
-    proKind: 39.99,
+    basisPreis: 129.99,
+    proKind: 79.99,
     periode: "Jahr",
     basisGeschichten: 30,
-    proKindGeschichten: 15,
-    hinweis: "Nur 6,67 €/Monat · spare 44 %",
+    proKindGeschichten: 30,
+    hinweis: "Nur 10,83 €/Monat · spare 23 %",
     features: [
       "Eigenes Profil pro Kind",
+      "Alle Längen – bis 10 Minuten",
       "Alles aus Familie",
-      "12 Monate zum Preis von ~7",
       "Jederzeit kündbar",
     ],
   },
@@ -172,14 +172,13 @@ function PlanKarte({ plan }: { plan: Plan }) {
 export default function PreisePage() {
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Kopf */}
       <div className="text-center mb-10">
         <h1 className="text-4xl font-bold text-white mb-3">
           Wähle deinen Plan 🌙
         </h1>
         <p className="text-indigo-300 text-lg max-w-xl mx-auto">
-          Ein Plan pro Kind – jederzeit weitere Kinder hinzufügen. Personalisiert,
-          illustriert und auf Wunsch vorgelesen.
+          30 Geschichten pro Monat – pro Kind. Jederzeit weitere Kinder
+          hinzufügen. Personalisiert, illustriert und auf Wunsch vorgelesen.
         </p>
       </div>
 
@@ -200,14 +199,12 @@ export default function PreisePage() {
         </Link>
       </div>
 
-      {/* Plan-Karten */}
       <div className="grid md:grid-cols-3 gap-6">
         {PLAENE.map((plan) => (
           <PlanKarte key={plan.id} plan={plan} />
         ))}
       </div>
 
-      {/* Vertrauens-Hinweis */}
       <p className="text-indigo-400 text-sm text-center mt-10">
         Jederzeit kündbar · Sichere Bezahlung · Keine versteckten Kosten
       </p>
