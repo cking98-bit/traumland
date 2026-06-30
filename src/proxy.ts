@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server"
 // Seiten die OHNE Login erreichbar sind
 const öffentlicheSeiten = ["/", "/login", "/preise"]
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Öffentliche Seiten durchlassen

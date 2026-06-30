@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSprache } from "@/components/LanguageProvider"
 import { useAuth } from "@/components/AuthProvider"
-import { setzeAbo } from "@/lib/abo"
 import type { Sprache } from "@/lib/i18n"
 
 type Plan = {
@@ -82,9 +81,10 @@ function euro(n: number, sprache: Sprache) {
 
 function PlanKarte({ plan }: { plan: Plan }) {
   const { t, sprache } = useSprache()
-  const { nutzer, aboNeuLaden } = useAuth()
+  const { nutzer } = useAuth()
   const router = useRouter()
   const [kinder, setKinder] = useState(1)
+  const [laedt, setLaedt] = useState(false)
 
   const gesamtPreis = plan.basisPreis + (kinder - 1) * plan.proKind
   const gesamtGeschichten =
@@ -162,24 +162,39 @@ function PlanKarte({ plan }: { plan: Plan }) {
       </ul>
 
       <button
+        disabled={laedt}
         onClick={async () => {
-          // Ohne Login zuerst anmelden
           if (!nutzer) {
             router.push("/login")
             return
           }
-          // Simuliertes Abo aktivieren (wird später durch Stripe ersetzt)
-          await setzeAbo(nutzer.uid, plan.id, kinder)
-          await aboNeuLaden()
-          router.push("/profile")
+          setLaedt(true)
+          try {
+            const res = await fetch("/api/checkout", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                uid: nutzer.uid,
+                plan: plan.id,
+                kinder,
+                email: nutzer.email,
+              }),
+            })
+            const data = await res.json()
+            if (data.url) {
+              window.location.href = data.url
+            }
+          } catch {
+            setLaedt(false)
+          }
         }}
-        className={`w-full font-bold py-3 rounded-xl transition ${
+        className={`w-full font-bold py-3 rounded-xl transition disabled:opacity-60 ${
           plan.beliebt
             ? "bg-yellow-400 hover:bg-yellow-300 text-indigo-950"
             : "bg-indigo-800 hover:bg-indigo-700 text-white"
         }`}
       >
-        {t(plan.nameKey)} {t("preise.waehlen")}
+        {laedt ? "…" : `${t(plan.nameKey)} ${t("preise.waehlen")}`}
       </button>
     </div>
   )
