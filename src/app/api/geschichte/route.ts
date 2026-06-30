@@ -2,12 +2,26 @@ import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, alter, stichwörter, stile, dauer } = await request.json()
+    const { name, alter, stichwörter, stile, dauer, sprache } =
+      await request.json()
 
     // Vorlesen: ca. 130 Wörter pro Minute
     const wörter = Number(dauer) * 130
 
-    const prompt = `Du bist ein einfühlsamer Geschichtenerzähler für Kinder. 
+    const prompt =
+      sprache === "en"
+        ? `You are a gentle bedtime storyteller for children.
+Write a bedtime story in English with the following requirements:
+
+- Main character: ${name} (${alter} years old)
+- Topics and interests: ${stichwörter}
+- Style: ${stile}
+- Length: about ${wörter} words (reading time approx. ${dauer} minutes)
+- Tone: simple, warm and soothing
+- Ending: calm and sleep-inducing
+
+Write ONLY the story, without a title or introduction.`
+        : `Du bist ein einfühlsamer Geschichtenerzähler für Kinder.
 Schreibe eine Gute-Nacht-Geschichte auf Deutsch mit folgenden Vorgaben:
 
 - Hauptfigur: ${name} (${alter} Jahre alt)

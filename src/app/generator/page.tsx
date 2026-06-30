@@ -18,13 +18,14 @@ const DAUER = [
 
 export default function GeneratorPage() {
   const router = useRouter()
-  const { t } = useSprache()
+  const { t, sprache } = useSprache()
 
   const [profile, setProfile] = useState<Profil[]>([])
   const [profilId, setProfilId] = useState("")
   const [stichwörter, setStichwörter] = useState("")
   const [stil, setStil] = useState<string[]>([])
   const [dauer, setDauer] = useState("5")
+  const [geschichteSprache, setGeschichteSprache] = useState<"de" | "en">(sprache)
   const [laden, setLaden] = useState(false)
   const [fehler, setFehler] = useState("")
 
@@ -82,6 +83,7 @@ export default function GeneratorPage() {
           stichwörter,
           stile: stil.join(", "),
           dauer,
+          sprache: geschichteSprache,
         }),
       })
 
@@ -101,6 +103,7 @@ export default function GeneratorPage() {
         stil: stilText,
         dauer,
         geschichte: data.geschichte,
+        sprache: geschichteSprache,
       })
 
       const params = new URLSearchParams({
@@ -110,6 +113,7 @@ export default function GeneratorPage() {
         stil: stilText,
         dauer,
         geschichte: data.geschichte,
+        sprache: geschichteSprache,
         id: id || "",
       })
 
@@ -196,6 +200,35 @@ export default function GeneratorPage() {
                   {t("gen.weitereKinder")}
                 </Link>
               </p>
+            </div>
+
+            {/* Sprache der Geschichte */}
+            <div>
+              <label className="text-white font-medium block mb-2">
+                {t("gen.spracheLabel")}
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setGeschichteSprache("de")}
+                  className={`rounded-xl py-3 text-sm font-medium transition ${
+                    geschichteSprache === "de"
+                      ? "bg-yellow-400 text-indigo-950"
+                      : "bg-indigo-800 hover:bg-indigo-700 text-white"
+                  }`}
+                >
+                  🇩🇪 Deutsch
+                </button>
+                <button
+                  onClick={() => setGeschichteSprache("en")}
+                  className={`rounded-xl py-3 text-sm font-medium transition ${
+                    geschichteSprache === "en"
+                      ? "bg-yellow-400 text-indigo-950"
+                      : "bg-indigo-800 hover:bg-indigo-700 text-white"
+                  }`}
+                >
+                  🇬🇧 English
+                </button>
+              </div>
             </div>
 
             {/* Stichwörter */}

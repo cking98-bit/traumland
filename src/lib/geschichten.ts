@@ -7,6 +7,7 @@ export type Geschichte = {
   dauer: string
   geschichte: string
   bild?: string
+  sprache?: string // Sprache der Geschichte: "de" | "en"
   datum: number
 }
 
