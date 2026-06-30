@@ -1,38 +1,43 @@
-// Abo-Status – VORERST SIMULIERT (wird später durch echtes Stripe-Abo ersetzt)
+import { doc, getDoc, setDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+
+// Abo-Status – jetzt serverseitig in Firestore (vorerst noch simuliert,
+// später schreibt der Stripe-Webhook hier rein)
 export type Abo = {
   plan: string // Plan-ID, z.B. "familie"
   kinder: number // Anzahl Kinder, die der Vertrag abdeckt
+  status?: string // "aktiv" | "gekuendigt" ...
 }
 
-const SCHLUESSEL = "traumland_abo"
-
-export function ladeAbo(): Abo | null {
-  if (typeof window === "undefined") return null
+export async function ladeAbo(uid: string): Promise<Abo | null> {
+  if (!db) return null
   try {
-    const roh = localStorage.getItem(SCHLUESSEL)
-    return roh ? JSON.parse(roh) : null
-  } catch {
+    const snap = await getDoc(doc(db, "users", uid))
+    const data = snap.data()
+    return (data?.abo as Abo) ?? null
+  } catch (e) {
+    console.error("Abo laden fehlgeschlagen:", e)
     return null
   }
 }
 
-export function hatAbo(): boolean {
-  return ladeAbo() !== null
+export async function setzeAbo(uid: string, plan: string, kinder: number) {
+  if (!db) return
+  await setDoc(
+    doc(db, "users", uid),
+    { abo: { plan, kinder, status: "aktiv" } },
+    { merge: true }
+  )
 }
 
-export function setzeAbo(plan: string, kinder: number) {
-  if (typeof window === "undefined") return
-  localStorage.setItem(SCHLUESSEL, JSON.stringify({ plan, kinder }))
-}
-
-// Ein weiteres Kind zum laufenden Vertrag hinzufügen (erhöht das Limit)
-export function erhoeheKinder(anzahl = 1) {
-  const abo = ladeAbo()
+// Ein weiteres Kind zum laufenden Vertrag hinzufügen
+export async function erhoeheKinder(uid: string) {
+  const abo = await ladeAbo(uid)
   if (!abo) return
-  setzeAbo(abo.plan, abo.kinder + anzahl)
+  await setzeAbo(uid, abo.plan, abo.kinder + 1)
 }
 
-export function kuendigeAbo() {
-  if (typeof window === "undefined") return
-  localStorage.removeItem(SCHLUESSEL)
+export async function kuendigeAbo(uid: string) {
+  if (!db) return
+  await setDoc(doc(db, "users", uid), { abo: null }, { merge: true })
 }

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSprache } from "@/components/LanguageProvider"
+import { useAuth } from "@/components/AuthProvider"
 import { setzeAbo } from "@/lib/abo"
 import type { Sprache } from "@/lib/i18n"
 
@@ -81,6 +82,7 @@ function euro(n: number, sprache: Sprache) {
 
 function PlanKarte({ plan }: { plan: Plan }) {
   const { t, sprache } = useSprache()
+  const { nutzer, aboNeuLaden } = useAuth()
   const router = useRouter()
   const [kinder, setKinder] = useState(1)
 
@@ -160,9 +162,15 @@ function PlanKarte({ plan }: { plan: Plan }) {
       </ul>
 
       <button
-        onClick={() => {
+        onClick={async () => {
+          // Ohne Login zuerst anmelden
+          if (!nutzer) {
+            router.push("/login")
+            return
+          }
           // Simuliertes Abo aktivieren (wird später durch Stripe ersetzt)
-          setzeAbo(plan.id, kinder)
+          await setzeAbo(nutzer.uid, plan.id, kinder)
+          await aboNeuLaden()
           router.push("/profile")
         }}
         className={`w-full font-bold py-3 rounded-xl transition ${

@@ -7,14 +7,13 @@ import {
   createUserWithEmailAndPassword,
 } from "firebase/auth"
 import { auth, googleProvider } from "@/lib/firebase"
-import { hatAbo } from "@/lib/abo"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/AuthProvider"
 import { useSprache } from "@/components/LanguageProvider"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { nutzer, laden } = useAuth()
+  const { nutzer, laden, abo, aboLaden } = useAuth()
   const { t } = useSprache()
 
   const [modus, setModus] = useState<"login" | "registrieren">("login")
@@ -25,8 +24,10 @@ export default function LoginPage() {
   const [ladevorgang, setLadevorgang] = useState(false)
 
   useEffect(() => {
-    if (!laden && nutzer) router.push(hatAbo() ? "/" : "/preise")
-  }, [nutzer, laden, router])
+    if (!laden && !aboLaden && nutzer) {
+      router.push(abo ? "/" : "/preise")
+    }
+  }, [nutzer, laden, abo, aboLaden, router])
 
   async function mitGoogleAnmelden() {
     setFehler("")
@@ -36,7 +37,7 @@ export default function LoginPage() {
     }
     try {
       await signInWithPopup(auth, googleProvider)
-      router.push(hatAbo() ? "/" : "/preise")
+      // Weiterleitung übernimmt der useEffect, sobald das Abo geladen ist
     } catch {
       setFehler(t("login.fehler.googleFehler"))
     }
@@ -73,7 +74,7 @@ export default function LoginPage() {
       } else {
         await signInWithEmailAndPassword(auth, email, passwort)
       }
-      router.push(hatAbo() ? "/" : "/preise")
+      // Weiterleitung übernimmt der useEffect, sobald das Abo geladen ist
     } catch (error: unknown) {
       const code = (error as { code?: string })?.code
       if (code === "auth/email-already-in-use") {

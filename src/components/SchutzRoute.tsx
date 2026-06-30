@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/components/AuthProvider"
-import { hatAbo } from "@/lib/abo"
 
 export default function SchutzRoute({
   children,
@@ -12,7 +11,7 @@ export default function SchutzRoute({
   children: React.ReactNode
   abo?: boolean // true = zusätzlich aktives Abo erforderlich
 }) {
-  const { nutzer, laden } = useAuth()
+  const { nutzer, laden, abo: aboStatus, aboLaden } = useAuth()
   const router = useRouter()
   const [bereit, setBereit] = useState(false)
 
@@ -25,17 +24,19 @@ export default function SchutzRoute({
       return
     }
 
-    // Eingeloggt, aber kein aktives Abo → immer zu den Preisen
-    if (abo && !hatAbo()) {
-      router.push("/preise")
-      return
+    // Abo erforderlich: erst warten bis geladen, dann ggf. umleiten
+    if (abo) {
+      if (aboLaden) return
+      if (!aboStatus) {
+        router.push("/preise")
+        return
+      }
     }
 
     setBereit(true)
-  }, [nutzer, laden, abo, router])
+  }, [nutzer, laden, abo, aboStatus, aboLaden, router])
 
-  // Während geprüft/umgeleitet wird: Ladeanzeige
-  if (laden || !bereit) {
+  if (laden || (abo && aboLaden) || !bereit) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
         <div className="text-5xl animate-bounce">🌙</div>

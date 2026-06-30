@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import SchutzRoute from "@/components/SchutzRoute"
 import { useSprache } from "@/components/LanguageProvider"
+import { useAuth } from "@/components/AuthProvider"
 import {
   ladeProfile,
   speichereProfil,
@@ -11,14 +12,14 @@ import {
   berechneAlter,
   type Profil,
 } from "@/lib/profile"
-import { ladeAbo, erhoeheKinder, type Abo } from "@/lib/abo"
+import { erhoeheKinder } from "@/lib/abo"
 
 const pad = (n: string) => n.padStart(2, "0")
 
 export default function ProfilePage() {
   const { t } = useSprache()
+  const { abo, nutzer, aboNeuLaden } = useAuth()
 
-  const [abo, setAboState] = useState<Abo | null>(null)
   const [profile, setProfile] = useState<Profil[]>([])
   const [name, setName] = useState("")
   const [tag, setTag] = useState("")
@@ -33,7 +34,6 @@ export default function ProfilePage() {
     tag && monat && jahr ? `${jahr}-${pad(monat)}-${pad(tag)}` : ""
 
   useEffect(() => {
-    setAboState(ladeAbo())
     setProfile(ladeProfile())
   }, [])
 
@@ -64,9 +64,10 @@ export default function ProfilePage() {
     setProfile(ladeProfile())
   }
 
-  function weiteresKind() {
-    erhoeheKinder(1)
-    setAboState(ladeAbo())
+  async function weiteresKind() {
+    if (!nutzer) return
+    await erhoeheKinder(nutzer.uid)
+    await aboNeuLaden()
   }
 
   const selectClass =
