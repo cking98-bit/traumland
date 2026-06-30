@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useRef } from "react"
+import { useSprache } from "@/components/LanguageProvider"
 
-// Nicht-Standard-Browser-APIs (nur Chrome/Edge Desktop) typisieren
 type AudioMitSink = HTMLAudioElement & {
   setSinkId?: (id: string) => Promise<void>
 }
@@ -11,18 +11,18 @@ type MediaDevicesMitAuswahl = MediaDevices & {
 }
 
 export default function VorleseButton({ text }: { text: string }) {
+  const { t } = useSprache()
+
   const [geschlecht, setGeschlecht] = useState<"weiblich" | "männlich">("weiblich")
   const [laden, setLaden] = useState(false)
   const [spielt, setSpielt] = useState(false)
   const [fehler, setFehler] = useState("")
 
-  // Ausgabegerät (Bluetooth-Lautsprecher / Kopfhörer)
   const [geraetId, setGeraetId] = useState<string | null>(null)
   const [geraetName, setGeraetName] = useState<string | null>(null)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  // Prüfen ob die Geräte-Auswahl im aktuellen Browser unterstützt wird
   const geraeteAuswahlMoeglich =
     typeof navigator !== "undefined" &&
     typeof (navigator.mediaDevices as MediaDevicesMitAuswahl)
@@ -34,9 +34,9 @@ export default function VorleseButton({ text }: { text: string }) {
       const md = navigator.mediaDevices as MediaDevicesMitAuswahl
       const geraet = await md.selectAudioOutput!()
       setGeraetId(geraet.deviceId)
-      setGeraetName(geraet.label || "Ausgewähltes Gerät")
+      setGeraetName(geraet.label || "✓")
     } catch {
-      // Nutzer hat abgebrochen oder kein Gerät verfügbar – kein harter Fehler
+      // Abgebrochen – kein harter Fehler
     }
   }
 
@@ -59,7 +59,6 @@ export default function VorleseButton({ text }: { text: string }) {
         return
       }
 
-      // Vorhandenes Audio stoppen
       if (audioRef.current) {
         audioRef.current.pause()
       }
@@ -67,25 +66,24 @@ export default function VorleseButton({ text }: { text: string }) {
       const audio = new Audio(data.audio) as AudioMitSink
       audioRef.current = audio
 
-      // Auf gewähltes Ausgabegerät leiten (falls unterstützt & ausgewählt)
       if (geraetId && typeof audio.setSinkId === "function") {
         try {
           await audio.setSinkId(geraetId)
         } catch {
-          setFehler("Ausgabegerät nicht verfügbar – nutze Standard-Lautsprecher.")
+          setFehler(t("vorlese.fehler.geraet"))
         }
       }
 
       audio.onended = () => setSpielt(false)
       audio.onerror = () => {
-        setFehler("Audio konnte nicht abgespielt werden")
+        setFehler(t("vorlese.fehler.audio"))
         setSpielt(false)
       }
 
       await audio.play()
       setSpielt(true)
     } catch {
-      setFehler("Verbindungsfehler beim Vorlesen")
+      setFehler(t("vorlese.fehler.verbindung"))
     } finally {
       setLaden(false)
     }
@@ -101,9 +99,8 @@ export default function VorleseButton({ text }: { text: string }) {
 
   return (
     <div className="bg-indigo-800/50 rounded-xl p-4 mb-6">
-      {/* Hinweis: Vorlesen ist optional */}
       <p className="text-indigo-300 text-xs mb-3 text-center">
-        🔊 Optional – die Geschichte steht unten auch immer als Text bereit.
+        {t("vorlese.optional")}
       </p>
 
       {/* Stimm-Auswahl */}
@@ -117,7 +114,7 @@ export default function VorleseButton({ text }: { text: string }) {
               : "bg-indigo-700 text-white hover:bg-indigo-600"
           }`}
         >
-          👩 Weibliche Stimme
+          {t("vorlese.weiblich")}
         </button>
         <button
           onClick={() => setGeschlecht("männlich")}
@@ -128,24 +125,22 @@ export default function VorleseButton({ text }: { text: string }) {
               : "bg-indigo-700 text-white hover:bg-indigo-600"
           }`}
         >
-          👨 Männliche Stimme
+          {t("vorlese.maennlich")}
         </button>
       </div>
 
-      {/* Ausgabegerät (Bluetooth / Lautsprecher) */}
+      {/* Ausgabegerät */}
       {geraeteAuswahlMoeglich ? (
         <button
           onClick={geraetWaehlen}
           disabled={spielt}
           className="w-full bg-indigo-700 hover:bg-indigo-600 text-white text-sm rounded-lg py-2 mb-4 transition disabled:opacity-50"
         >
-          🔈 Ausgabegerät: {geraetName ?? "Standard wählen"}
+          {t("vorlese.geraet")} {geraetName ?? t("vorlese.geraetStandard")}
         </button>
       ) : (
         <p className="text-indigo-400 text-xs mb-4 text-center">
-          🔈 Geräte-Auswahl (z. B. Bluetooth-Box) wird nur in Chrome/Edge am
-          Computer unterstützt. Auf dem Handy nutzt die App das verbundene
-          Standard-Gerät.
+          {t("vorlese.geraetHint")}
         </p>
       )}
 
@@ -155,21 +150,21 @@ export default function VorleseButton({ text }: { text: string }) {
           disabled
           className="w-full bg-yellow-400/60 text-indigo-950 font-bold py-3 rounded-lg"
         >
-          🎙️ Stimme wird erzeugt...
+          {t("vorlese.erzeugt")}
         </button>
       ) : !spielt ? (
         <button
           onClick={vorlesen}
           className="w-full bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-3 rounded-lg transition"
         >
-          🔊 Geschichte vorlesen
+          {t("vorlese.vorlesen")}
         </button>
       ) : (
         <button
           onClick={stoppen}
           className="w-full bg-red-500 hover:bg-red-400 text-white font-bold py-3 rounded-lg transition"
         >
-          ⏹ Vorlesen stoppen
+          {t("vorlese.stoppen")}
         </button>
       )}
 

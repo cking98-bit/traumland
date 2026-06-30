@@ -6,24 +6,19 @@ import Link from "next/link"
 import { speichereGeschichte, istVoll, MAX_GESCHICHTEN } from "@/lib/geschichten"
 import { ladeProfile, berechneAlter, type Profil } from "@/lib/profile"
 import SchutzRoute from "@/components/SchutzRoute"
+import { useSprache } from "@/components/LanguageProvider"
 
-const STILE = [
-  { id: "abenteuer", label: "Abenteuer 🗺️" },
-  { id: "maerchen", label: "Märchen 🧚" },
-  { id: "lustig", label: "Lustig 😄" },
-  { id: "weltraum", label: "Weltraum 🚀" },
-  { id: "tiere", label: "Tiere 🦁" },
-  { id: "fantasy", label: "Fantasy 🐉" },
-]
+const STIL_IDS = ["abenteuer", "maerchen", "lustig", "weltraum", "tiere", "fantasy"]
 
 const DAUER = [
-  { id: "2", label: "Kurz · ~2 Min" },
-  { id: "5", label: "Mittel · ~5 Min" },
-  { id: "10", label: "Lang · ~10 Min" },
+  { id: "2", key: "dauer.kurz" },
+  { id: "5", key: "dauer.mittel" },
+  { id: "10", key: "dauer.lang" },
 ]
 
 export default function GeneratorPage() {
   const router = useRouter()
+  const { t } = useSprache()
 
   const [profile, setProfile] = useState<Profil[]>([])
   const [profilId, setProfilId] = useState("")
@@ -57,10 +52,10 @@ export default function GeneratorPage() {
 
   function validieren() {
     if (istVoll())
-      return `Deine Bibliothek ist voll (max. ${MAX_GESCHICHTEN} Geschichten). Bitte lösche zuerst eine Geschichte.`
-    if (!ausgewählt) return "Bitte wähle ein Kind aus."
-    if (!stichwörter.trim()) return "Bitte gib mindestens ein Stichwort ein."
-    if (stil.length === 0) return "Bitte wähle mindestens einen Geschichte-Stil aus."
+      return t("gen.fehler.voll").replace("{n}", String(MAX_GESCHICHTEN))
+    if (!ausgewählt) return t("gen.fehler.kind")
+    if (!stichwörter.trim()) return t("gen.fehler.stichwort")
+    if (stil.length === 0) return t("gen.fehler.stil")
     return ""
   }
 
@@ -120,7 +115,7 @@ export default function GeneratorPage() {
 
       router.push(`/geschichte?${params.toString()}`)
     } catch {
-      setFehler("Verbindungsfehler – bitte versuche es erneut.")
+      setFehler(t("gen.fehler.verbindung"))
       setLaden(false)
     }
   }
@@ -130,10 +125,8 @@ export default function GeneratorPage() {
       <SchutzRoute abo>
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-6">
           <div className="text-7xl animate-bounce">🌙</div>
-          <h2 className="text-2xl font-bold text-white">
-            Wir zaubern deine Geschichte...
-          </h2>
-          <p className="text-indigo-300">Das dauert nur einen Moment ✨</p>
+          <h2 className="text-2xl font-bold text-white">{t("gen.ladenTitel")}</h2>
+          <p className="text-indigo-300">{t("gen.ladenText")}</p>
           <div className="flex gap-2 mt-4">
             {[0, 1, 2].map((i) => (
               <div
@@ -151,29 +144,22 @@ export default function GeneratorPage() {
   return (
     <SchutzRoute abo>
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-2">
-          ✨ Neue Geschichte erstellen
-        </h1>
-        <p className="text-indigo-300 mb-8">
-          Erzähl uns von deinem Kind – wir zaubern eine einzigartige Geschichte!
-        </p>
+        <h1 className="text-3xl font-bold text-white mb-2">{t("gen.titel")}</h1>
+        <p className="text-indigo-300 mb-8">{t("gen.untertitel")}</p>
 
         {/* Kein Profil vorhanden → zuerst anlegen */}
         {profile.length === 0 ? (
           <div className="bg-indigo-900 rounded-2xl p-10 text-center">
             <div className="text-5xl mb-3">👧</div>
             <h2 className="text-white text-xl font-bold mb-2">
-              Lege zuerst ein Kinder-Profil an
+              {t("gen.profilGateTitel")}
             </h2>
-            <p className="text-indigo-300 mb-6">
-              Damit wir Geschichten personalisieren können, brauchen wir den Namen
-              und das Alter deines Kindes.
-            </p>
+            <p className="text-indigo-300 mb-6">{t("gen.profilGateText")}</p>
             <Link
               href="/profile"
               className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-8 py-3 rounded-xl transition inline-block"
             >
-              Profil anlegen 👧
+              {t("gen.profilGateCta")}
             </Link>
           </div>
         ) : (
@@ -183,7 +169,7 @@ export default function GeneratorPage() {
                 {fehler}{" "}
                 {istVoll() && (
                   <a href="/bibliothek" className="underline font-bold">
-                    Zur Bibliothek →
+                    {t("gen.zurBibliothek")}
                   </a>
                 )}
               </div>
@@ -192,7 +178,7 @@ export default function GeneratorPage() {
             {/* Kind auswählen */}
             <div>
               <label className="text-white font-medium block mb-2">
-                Für welches Kind?
+                {t("gen.fuerKind")}
               </label>
               <select
                 value={profilId}
@@ -201,32 +187,30 @@ export default function GeneratorPage() {
               >
                 {profile.map((p) => (
                   <option key={p.id} value={p.id}>
-                    {p.name} ({berechneAlter(p.geburtsdatum)} Jahre)
+                    {p.name} ({berechneAlter(p.geburtsdatum)} {t("gemein.jahre")})
                   </option>
                 ))}
               </select>
               <p className="text-indigo-400 text-xs mt-2">
-                Weitere Kinder im{" "}
                 <Link href="/profile" className="underline">
-                  Profil-Bereich
-                </Link>{" "}
-                hinzufügen.
+                  {t("gen.weitereKinder")}
+                </Link>
               </p>
             </div>
 
             {/* Stichwörter */}
             <div>
               <label className="text-white font-medium block mb-2">
-                Stichwörter{" "}
+                {t("gen.stichwoerter")}{" "}
                 <span className="text-indigo-400 text-sm">
-                  (was liebt dein Kind?)
+                  {t("gen.stichwoerterHint")}
                 </span>
               </label>
               <input
                 type="text"
                 value={stichwörter}
                 onChange={(e) => setStichwörter(e.target.value)}
-                placeholder="z.B. Drachen, Weltall, Fußball"
+                placeholder={t("gen.stichwoerterPlaceholder")}
                 className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
               />
             </div>
@@ -234,23 +218,23 @@ export default function GeneratorPage() {
             {/* Stil */}
             <div>
               <label className="text-white font-medium block mb-2">
-                Geschichte-Stil{" "}
+                {t("gen.stil")}{" "}
                 <span className="text-indigo-400 text-sm">
-                  (mehrere auswählbar)
+                  {t("gen.stilHint")}
                 </span>
               </label>
               <div className="grid grid-cols-3 gap-3">
-                {STILE.map((s) => (
+                {STIL_IDS.map((id) => (
                   <button
-                    key={s.id}
-                    onClick={() => toggleStil(s.id)}
+                    key={id}
+                    onClick={() => toggleStil(id)}
                     className={`rounded-xl py-3 text-sm font-medium transition ${
-                      stil.includes(s.id)
+                      stil.includes(id)
                         ? "bg-yellow-400 text-indigo-950"
                         : "bg-indigo-800 hover:bg-indigo-700 text-white"
                     }`}
                   >
-                    {s.label}
+                    {t(`stil.${id}`)}
                   </button>
                 ))}
               </div>
@@ -259,9 +243,9 @@ export default function GeneratorPage() {
             {/* Dauer */}
             <div>
               <label className="text-white font-medium block mb-2">
-                Dauer{" "}
+                {t("gen.dauer")}{" "}
                 <span className="text-indigo-400 text-sm">
-                  (wie lange soll vorgelesen werden?)
+                  {t("gen.dauerHint")}
                 </span>
               </label>
               <div className="grid grid-cols-3 gap-3">
@@ -275,7 +259,7 @@ export default function GeneratorPage() {
                         : "bg-indigo-800 hover:bg-indigo-700 text-white"
                     }`}
                   >
-                    {d.label}
+                    {t(d.key)}
                   </button>
                 ))}
               </div>
@@ -285,7 +269,7 @@ export default function GeneratorPage() {
               onClick={handleSubmit}
               className="w-full bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-4 rounded-xl text-lg transition mt-2"
             >
-              Geschichte generieren ✨
+              {t("gen.btn")}
             </button>
           </div>
         )}

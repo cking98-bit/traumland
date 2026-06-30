@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { speichereBild } from "@/lib/geschichten"
+import { useSprache } from "@/components/LanguageProvider"
 
 export default function Illustration({
   stichwörter,
@@ -14,6 +15,7 @@ export default function Illustration({
   geschichteId?: string
   vorhandenessBild?: string
 }) {
+  const { t } = useSprache()
   const [bild, setBild] = useState<string | null>(vorhandenessBild || null)
   const [laden, setLaden] = useState(false)
   const [fehler, setFehler] = useState("")
@@ -47,7 +49,7 @@ export default function Illustration({
         speichereBild(geschichteId, data.bild)
       }
     } catch {
-      setFehler("Illustration konnte nicht erzeugt werden")
+      setFehler(t("illu.fehler"))
     } finally {
       setLaden(false)
     }
@@ -57,7 +59,7 @@ export default function Illustration({
     return (
       <div className="bg-indigo-800 rounded-xl h-56 flex flex-col items-center justify-center mb-6 gap-3">
         <div className="text-4xl animate-pulse">🎨</div>
-        <p className="text-indigo-300 text-sm">Illustration wird gemalt...</p>
+        <p className="text-indigo-300 text-sm">{t("illu.malt")}</p>
         <div className="flex gap-2">
           {[0, 1, 2].map((i) => (
             <div
@@ -80,7 +82,7 @@ export default function Illustration({
           onClick={erzeugen}
           className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-4 py-2 rounded-lg text-sm transition"
         >
-          Nochmal versuchen
+          {t("illu.nochmal")}
         </button>
       </div>
     )

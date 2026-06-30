@@ -9,8 +9,10 @@ import {
   type Geschichte,
 } from "@/lib/geschichten"
 import SchutzRoute from "@/components/SchutzRoute"
+import { useSprache } from "@/components/LanguageProvider"
 
 export default function BibliothekPage() {
+  const { t, sprache } = useSprache()
   const [geschichten, setGeschichten] = useState<Geschichte[]>([])
   const [geladen, setGeladen] = useState(false)
 
@@ -44,7 +46,7 @@ export default function BibliothekPage() {
     <SchutzRoute abo>
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h1 className="text-3xl font-bold text-white">📚 Meine Bibliothek</h1>
+        <h1 className="text-3xl font-bold text-white">{t("bib.titel")}</h1>
         <span
           className={`text-sm font-medium px-3 py-1 rounded-full ${
             istVoll
@@ -58,30 +60,25 @@ export default function BibliothekPage() {
 
       {istVoll && (
         <div className="bg-yellow-400/10 border border-yellow-400/30 text-yellow-300 rounded-xl px-4 py-3 text-sm mb-6">
-          📚 Deine Bibliothek ist voll – lösche eine Geschichte um eine neue
-          erstellen zu können.
+          {t("bib.voll")}
         </div>
       )}
 
-      <p className="text-indigo-300 mb-8">
-        Alle deine generierten Geschichten auf einen Blick
-      </p>
+      <p className="text-indigo-300 mb-8">{t("bib.untertitel")}</p>
 
       {/* Leerer Zustand */}
       {geladen && geschichten.length === 0 && (
         <div className="bg-indigo-900 rounded-2xl p-12 text-center">
           <div className="text-6xl mb-4">🌙</div>
           <h2 className="text-white text-xl font-bold mb-2">
-            Noch keine Geschichten
+            {t("bib.leerTitel")}
           </h2>
-          <p className="text-indigo-300 mb-6">
-            Erstelle deine erste personalisierte Geschichte!
-          </p>
+          <p className="text-indigo-300 mb-6">{t("bib.leerText")}</p>
           <Link
             href="/generator"
             className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-8 py-3 rounded-xl transition inline-block"
           >
-            Erste Geschichte erstellen ✨
+            {t("bib.leerCta")}
           </Link>
         </div>
       )}
@@ -103,7 +100,7 @@ export default function BibliothekPage() {
               />
             ) : (
               <div className="w-full h-40 bg-indigo-800 flex items-center justify-center">
-                <span className="text-indigo-500 text-sm">🎨 Kein Bild</span>
+                <span className="text-indigo-500 text-sm">{t("bib.keinBild")}</span>
               </div>
             )}
 
@@ -112,7 +109,7 @@ export default function BibliothekPage() {
                 🌙 {g.name}
               </h3>
               <p className="text-indigo-400 text-xs mb-2">
-                {new Date(g.datum).toLocaleDateString("de-DE")} · {g.alter} Jahre · ~{g.dauer} Min
+                {new Date(g.datum).toLocaleDateString(sprache === "de" ? "de-DE" : "en-GB")} · {g.alter} {t("gemein.jahre")} · ~{g.dauer} {t("gemein.min")}
               </p>
               <p className="text-indigo-200 text-sm mb-4 line-clamp-2 flex-1">
                 {g.geschichte}
@@ -122,7 +119,7 @@ export default function BibliothekPage() {
                   href={geschichteLink(g)}
                   className="flex-1 bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-2 rounded-lg text-center text-sm transition"
                 >
-                  Öffnen
+                  {t("bib.oeffnen")}
                 </Link>
                 <button
                   onClick={() => entfernen(g.id)}
