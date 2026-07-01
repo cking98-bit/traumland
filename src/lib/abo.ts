@@ -4,9 +4,12 @@ import { db } from "@/lib/firebase"
 // Abo-Status – jetzt serverseitig in Firestore (vorerst noch simuliert,
 // später schreibt der Stripe-Webhook hier rein)
 export type Abo = {
-  plan: string // Plan-ID, z.B. "familie"
-  kinder: number // Anzahl Kinder, die der Vertrag abdeckt
-  status?: string // "aktiv" | "gekuendigt" ...
+  plan: string
+  kinder: number
+  status?: string
+  stripeSubscriptionId?: string
+  stripeCustomerId?: string
+  wird_gekuendigt?: boolean
 }
 
 export async function ladeAbo(uid: string): Promise<Abo | null> {

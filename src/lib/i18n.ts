@@ -20,6 +20,7 @@ export const texte: Record<Sprache, Dict> = {
     "nav.profile": "👧 Profile",
     "nav.anmelden": "Anmelden",
     "nav.abmelden": "Abmelden",
+    "nav.abo": "💳 Abo",
 
     // Startseite
     "home.untertitel": "Personalisierte KI-Gute-Nacht-Geschichten – einzigartig für dein Kind",
@@ -201,6 +202,49 @@ export const texte: Record<Sprache, Dict> = {
     "illu.malt": "Illustration wird gemalt...",
     "illu.fehler": "Illustration konnte nicht erzeugt werden",
     "illu.nochmal": "Nochmal versuchen",
+
+    // Abo-Verwaltung
+    "abo.titel": "Mein Abonnement",
+    "abo.plan": "Aktueller Plan",
+    "abo.naechsteAbrechnung": "Nächste Abrechnung",
+    "abo.kosten": "Monatliche Kosten",
+    "abo.status.aktiv": "Aktiv",
+    "abo.status.wirdGekuendigt": "Läuft aus – wird nicht verlängert",
+    "abo.kuendigen": "Abo kündigen",
+    "abo.kuendigenConfirmTitel": "Abo wirklich kündigen?",
+    "abo.kuendigenConfirmText": "Dein Abo bleibt bis zum Ende des Abrechnungszeitraums aktiv. Danach wird es nicht mehr verlängert.",
+    "abo.kuendigenJa": "Ja, kündigen",
+    "abo.kuendigenNein": "Abbrechen",
+    "abo.gekuendigt": "Dein Abo wurde erfolgreich gekündigt.",
+    "abo.planAendern": "Plan wechseln",
+    "abo.keinAbo": "Du hast kein aktives Abo.",
+    "abo.aboAbschliessen": "Jetzt Abo abschließen",
+    "abo.laeden": "Lade Abo-Details...",
+    "abo.fehler": "Abo-Details konnten nicht geladen werden.",
+    "abo.kinder": "Gebuchte Kinder",
+    "abo.jahrHinweis": "Jahrestarif – nur kündbar, kein Planwechsel möglich.",
+    "abo.kuendigenFehler": "Kündigung fehlgeschlagen. Bitte versuche es erneut.",
+
+    // Cookie
+    "cookie.text": "Wir verwenden technisch notwendige Cookies für die Anmeldung sowie lokale Speicherung für deine Profile und Geschichten.",
+    "cookie.mehr": "Mehr erfahren",
+    "cookie.akzeptieren": "Akzeptieren",
+    "cookie.ablehnen": "Nur notwendige",
+
+    // Passwort zurücksetzen
+    "login.passwortVergessen": "Passwort vergessen?",
+    "login.passwortReset": "Passwort zurücksetzen",
+    "login.passwortResetText": "Gib deine E-Mail-Adresse ein. Wir senden dir einen Link zum Zurücksetzen des Passworts.",
+    "login.passwortResetGesendet": "E-Mail gesendet! Bitte prüfe dein Postfach.",
+    "login.passwortResetFehler": "E-Mail konnte nicht gesendet werden. Bitte prüfe die Adresse.",
+    "login.zurueck": "← Zurück",
+
+    // Geschichten-Limit
+    "gen.fehler.limit": "Du hast diesen Monat das Limit von 30 Geschichten für dieses Kind erreicht. Nächsten Monat geht es weiter!",
+
+    // Footer
+    "footer.impressum": "Impressum",
+    "footer.datenschutz": "Datenschutz",
   },
 
   en: {
@@ -213,6 +257,7 @@ export const texte: Record<Sprache, Dict> = {
     "nav.profile": "👧 Profiles",
     "nav.anmelden": "Sign in",
     "nav.abmelden": "Sign out",
+    "nav.abo": "💳 Subscription",
 
     "home.untertitel": "Personalized AI bedtime stories – unique to your child",
     "home.cta": "Create a new story ✨",
@@ -389,5 +434,48 @@ export const texte: Record<Sprache, Dict> = {
     "illu.malt": "Drawing illustration...",
     "illu.fehler": "Couldn't create illustration",
     "illu.nochmal": "Try again",
+
+    // Subscription management
+    "abo.titel": "My subscription",
+    "abo.plan": "Current plan",
+    "abo.naechsteAbrechnung": "Next billing date",
+    "abo.kosten": "Monthly costs",
+    "abo.status.aktiv": "Active",
+    "abo.status.wirdGekuendigt": "Expiring – will not renew",
+    "abo.kuendigen": "Cancel subscription",
+    "abo.kuendigenConfirmTitel": "Really cancel subscription?",
+    "abo.kuendigenConfirmText": "Your subscription stays active until the end of the billing period. After that it will not renew.",
+    "abo.kuendigenJa": "Yes, cancel",
+    "abo.kuendigenNein": "Keep subscription",
+    "abo.gekuendigt": "Your subscription has been cancelled successfully.",
+    "abo.planAendern": "Change plan",
+    "abo.keinAbo": "You have no active subscription.",
+    "abo.aboAbschliessen": "Get a subscription",
+    "abo.laeden": "Loading subscription details...",
+    "abo.fehler": "Could not load subscription details.",
+    "abo.kinder": "Booked children",
+    "abo.jahrHinweis": "Yearly plan – cancellation only, no plan change possible.",
+    "abo.kuendigenFehler": "Cancellation failed. Please try again.",
+
+    // Cookie
+    "cookie.text": "We use technically necessary cookies for login and local storage for your profiles and stories.",
+    "cookie.mehr": "Learn more",
+    "cookie.akzeptieren": "Accept",
+    "cookie.ablehnen": "Essentials only",
+
+    // Password reset
+    "login.passwortVergessen": "Forgot password?",
+    "login.passwortReset": "Reset password",
+    "login.passwortResetText": "Enter your email address. We'll send you a link to reset your password.",
+    "login.passwortResetGesendet": "Email sent! Please check your inbox.",
+    "login.passwortResetFehler": "Could not send email. Please check the address.",
+    "login.zurueck": "← Back",
+
+    // Story limit
+    "gen.fehler.limit": "You have reached the limit of 30 stories for this child this month. Come back next month!",
+
+    // Footer
+    "footer.impressum": "Imprint",
+    "footer.datenschutz": "Privacy",
   },
 }

@@ -1,9 +1,28 @@
 import { NextRequest, NextResponse } from "next/server"
+import { adminDb } from "@/lib/firebaseAdmin"
+import { FieldValue } from "firebase-admin/firestore"
+
+export const runtime = "nodejs"
+
+const LIMIT = 30
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, alter, stichwörter, stile, dauer, sprache } =
+    const { name, alter, stichwörter, stile, dauer, sprache, uid, profilId } =
       await request.json()
+
+    // Monatliches Geschichten-Limit pro Kind prüfen
+    if (uid && profilId) {
+      const monat = new Date().toISOString().slice(0, 7) // "YYYY-MM"
+      const zaehlerRef = adminDb.collection("users").doc(uid).collection("zaehler").doc(monat)
+      const zaehlerSnap = await zaehlerRef.get()
+      const zaehlerDaten = zaehlerSnap.data() ?? {}
+      const aktuellerZaehler = zaehlerDaten[profilId] ?? 0
+
+      if (aktuellerZaehler >= LIMIT) {
+        return NextResponse.json({ fehler: "limit" }, { status: 429 })
+      }
+    }
 
     // Vorlesen: ca. 130 Wörter pro Minute
     const wörter = Number(dauer) * 130
@@ -45,7 +64,6 @@ Schreibe NUR die Geschichte, ohne Titel oder Einleitung.`
           contents: [{ parts: [{ text: prompt }] }],
           generationConfig: {
             temperature: 0.9,
-            // Genug Tokens für die längste Geschichte (~10 Min)
             maxOutputTokens: 4096,
             thinkingConfig: { thinkingBudget: 0 },
           },
@@ -63,6 +81,13 @@ Schreibe NUR die Geschichte, ohne Titel oder Einleitung.`
         { fehler: "Keine Geschichte generiert" },
         { status: 500 }
       )
+    }
+
+    // Zähler erhöhen
+    if (uid && profilId) {
+      const monat = new Date().toISOString().slice(0, 7)
+      const zaehlerRef = adminDb.collection("users").doc(uid).collection("zaehler").doc(monat)
+      await zaehlerRef.set({ [profilId]: FieldValue.increment(1) }, { merge: true })
     }
 
     return NextResponse.json({ geschichte })

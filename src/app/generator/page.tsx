@@ -7,6 +7,7 @@ import { speichereGeschichte, speichereBild, istVoll, MAX_GESCHICHTEN } from "@/
 import { ladeProfile, berechneAlter, type Profil } from "@/lib/profile"
 import SchutzRoute from "@/components/SchutzRoute"
 import { useSprache } from "@/components/LanguageProvider"
+import { useAuth } from "@/components/AuthProvider"
 
 const STIL_IDS = ["abenteuer", "maerchen", "lustig", "weltraum", "tiere", "fantasy"]
 
@@ -19,6 +20,7 @@ const DAUER = [
 export default function GeneratorPage() {
   const router = useRouter()
   const { t, sprache } = useSprache()
+  const { nutzer } = useAuth()
 
   const [profile, setProfile] = useState<Profil[]>([])
   const [profilId, setProfilId] = useState("")
@@ -84,10 +86,18 @@ export default function GeneratorPage() {
           stile: stil.join(", "),
           dauer,
           sprache: geschichteSprache,
+          uid: nutzer?.uid ?? null,
+          profilId,
         }),
       })
 
       const data = await response.json()
+
+      if (response.status === 429 || data.fehler === "limit") {
+        setFehler(t("gen.fehler.limit"))
+        setLaden(false)
+        return
+      }
 
       if (data.fehler) {
         setFehler(data.fehler)
@@ -270,7 +280,7 @@ export default function GeneratorPage() {
                   {t("gen.stilHint")}
                 </span>
               </label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {STIL_IDS.map((id) => (
                   <button
                     key={id}

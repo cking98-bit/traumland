@@ -10,9 +10,9 @@ export default function Home() {
   return (
     <div className="text-center py-12">
       {/* Hero */}
-      <div className="text-8xl mb-6">🌙</div>
-      <h1 className="text-5xl font-bold text-white mb-4">{t("marke")}</h1>
-      <p className="text-indigo-300 text-xl mb-10 max-w-lg mx-auto">
+      <div className="text-6xl md:text-8xl mb-6">🌙</div>
+      <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">{t("marke")}</h1>
+      <p className="text-indigo-300 text-base md:text-xl mb-10 max-w-lg mx-auto">
         {t("home.untertitel")}
       </p>
 

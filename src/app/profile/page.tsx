@@ -131,13 +131,23 @@ export default function ProfilePage() {
         </div>
       ) : (
         <div className="max-w-2xl mx-auto">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-3xl font-bold text-white">{t("profil.titel")}</h1>
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold text-white">{t("profil.titel")}</h1>
             <span className="text-sm font-medium px-3 py-1 rounded-full bg-indigo-800 text-indigo-300">
               {belegt} {t("profil.von")} {abo.kinder} {t("profil.plaetze")}
             </span>
           </div>
-          <p className="text-indigo-300 mb-8">{t("profil.untertitel")}</p>
+          <p className="text-indigo-300 mb-4">{t("profil.untertitel")}</p>
+
+          {/* Abo-Verwaltung */}
+          <div className="mb-8">
+            <Link
+              href="/abo"
+              className="inline-flex items-center gap-2 text-sm text-indigo-300 hover:text-white bg-indigo-800 hover:bg-indigo-700 px-4 py-2 rounded-xl transition"
+            >
+              💳 {t("abo.titel")} →
+            </Link>
+          </div>
 
           {/* Banner: erstes Kind noch nicht angelegt */}
           {profile.length === 0 && platzFrei && (
@@ -379,7 +389,7 @@ export default function ProfilePage() {
                   )}
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={() => {
                       setZeigAddForm(false)
