@@ -20,7 +20,7 @@ type AboDetails = {
 
 export default function AboPage() {
   const { t, sprache } = useSprache()
-  const { nutzer, abo: aboAuth, aboNeuLaden } = useAuth()
+  const { nutzer, laden: authLaden, aboLaden, aboNeuLaden } = useAuth()
 
   const [details, setDetails] = useState<AboDetails | null>(null)
   const [laden, setLaden] = useState(true)
@@ -31,20 +31,40 @@ export default function AboPage() {
   const [kuendigenFehler, setKuendigenFehler] = useState("")
 
   useEffect(() => {
-    if (!nutzer) return
+    // Warten bis Auth fertig geladen
+    if (authLaden || aboLaden) return
+    if (!nutzer) {
+      setLaden(false)
+      return
+    }
 
-    fetch(`/api/abo/details?uid=${nutzer.uid}`)
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 12000)
+
+    fetch(`/api/abo/details?uid=${nutzer.uid}`, { signal: controller.signal })
       .then((r) => r.json())
       .then((data) => {
+        clearTimeout(timeout)
         if (data.fehler) {
-          setFehler(t("abo.fehler"))
+          if (data.fehler === "Kein Abo") {
+            setDetails(null)
+          } else {
+            setFehler(t("abo.fehler"))
+          }
         } else {
           setDetails(data)
         }
       })
-      .catch(() => setFehler(t("abo.fehler")))
+      .catch((err) => {
+        clearTimeout(timeout)
+        if (err.name !== "AbortError") {
+          setFehler(t("abo.fehler"))
+        } else {
+          setFehler(t("abo.fehler"))
+        }
+      })
       .finally(() => setLaden(false))
-  }, [nutzer]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [nutzer, authLaden, aboLaden]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function kuendigen() {
     if (!nutzer) return
@@ -61,7 +81,6 @@ export default function AboPage() {
       setErfolg(t("abo.gekuendigt"))
       setZeigBestaetigung(false)
       await aboNeuLaden()
-      // Refresh details
       const r2 = await fetch(`/api/abo/details?uid=${nutzer.uid}`)
       const d2 = await r2.json()
       if (!d2.fehler) setDetails(d2)
@@ -94,7 +113,7 @@ export default function AboPage() {
   const wirdGekuendigt = details?.cancelAtPeriodEnd || details?.abo.wird_gekuendigt
 
   return (
-    <SchutzRoute abo>
+    <SchutzRoute>
       <div className="max-w-xl mx-auto">
         <div className="mb-6">
           <Link href="/profile" className="text-indigo-400 hover:text-white text-sm transition">
@@ -109,10 +128,18 @@ export default function AboPage() {
             {t("abo.laeden")}
           </div>
         ) : fehler ? (
-          <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-2xl px-6 py-4">
-            {fehler}
+          <div className="flex flex-col gap-4">
+            <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-2xl px-6 py-4">
+              {fehler}
+            </div>
+            <button
+              onClick={() => { setFehler(""); setLaden(true); setDetails(null) }}
+              className="text-indigo-400 hover:text-white text-sm transition"
+            >
+              Nochmal versuchen
+            </button>
           </div>
-        ) : !details || !aboAuth ? (
+        ) : !details ? (
           <div className="bg-indigo-900 rounded-2xl p-8 text-center">
             <p className="text-indigo-300 mb-4">{t("abo.keinAbo")}</p>
             <Link
@@ -130,7 +157,6 @@ export default function AboPage() {
               </div>
             )}
 
-            {/* Plan-Info-Karte */}
             <div className="bg-indigo-900 rounded-2xl p-6 flex flex-col gap-4">
               <div className="flex justify-between items-center">
                 <span className="text-indigo-400 text-sm">{t("abo.plan")}</span>
@@ -175,14 +201,12 @@ export default function AboPage() {
               </div>
             </div>
 
-            {/* Jahrestarif-Hinweis */}
             {istJahr && (
               <div className="bg-indigo-800/60 border border-indigo-700 rounded-2xl px-5 py-3 text-indigo-300 text-sm">
                 {t("abo.jahrHinweis")}
               </div>
             )}
 
-            {/* Aktionen */}
             {!wirdGekuendigt && (
               <div className="flex flex-col sm:flex-row gap-3">
                 {!istJahr && (
@@ -202,7 +226,6 @@ export default function AboPage() {
               </div>
             )}
 
-            {/* Kündigungs-Bestätigungsdialog */}
             {zeigBestaetigung && (
               <div className="bg-indigo-800 border border-red-500/40 rounded-2xl p-6">
                 <h3 className="text-white font-bold text-lg mb-2">
@@ -220,10 +243,7 @@ export default function AboPage() {
 
                 <div className="flex flex-col sm:flex-row gap-3">
                   <button
-                    onClick={() => {
-                      setZeigBestaetigung(false)
-                      setKuendigenFehler("")
-                    }}
+                    onClick={() => { setZeigBestaetigung(false); setKuendigenFehler("") }}
                     className="flex-1 bg-indigo-700 hover:bg-indigo-600 text-white font-bold px-5 py-3 rounded-xl transition"
                   >
                     {t("abo.kuendigenNein")}
