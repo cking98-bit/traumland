@@ -5,7 +5,7 @@ import Link from "next/link"
 import SchutzRoute from "@/components/SchutzRoute"
 import { useSprache } from "@/components/LanguageProvider"
 import { useAuth } from "@/components/AuthProvider"
-import { PLAN_INFO } from "@/lib/plaene"
+import { PLAN_INFO, berechnePreis } from "@/lib/plaene"
 
 type AboDetails = {
   abo: {
@@ -172,7 +172,7 @@ export default function AboPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-indigo-400 text-sm">{t("abo.kosten")}</span>
                   <span className="text-white font-bold">
-                    {(planInfo.proKind * details.abo.kinder)
+                    {berechnePreis(details.abo.plan, details.abo.kinder)
                       .toFixed(2)
                       .replace(".", sprache === "de" ? "," : ".")}{" "}
                     € / {planInfo.periode === "Jahr" ? t("preise.jahr") : t("preise.monat")}

@@ -4,9 +4,27 @@ import Stripe from "stripe"
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 const PLAENE = {
-  light: { name: "Dreamland Light", basisPreis: 10.99, proKind: 6.99, interval: "month" as const },
-  familie: { name: "Dreamland Familie", basisPreis: 13.99, proKind: 8.99, interval: "month" as const },
-  "familie-jahr": { name: "Dreamland Familie Jahr", basisPreis: 129.99, proKind: 79.99, interval: "year" as const },
+  light: {
+    productId: "prod_Uo6s0QhTdjIXI7",
+    basisPreis: 10.99,
+    proKind: 6.99,
+    interval: "month" as const,
+    name: "Dreamland Light",
+  },
+  familie: {
+    productId: "prod_Uo6sRk71y68Xyz",
+    basisPreis: 13.99,
+    proKind: 8.99,
+    interval: "month" as const,
+    name: "Dreamland Familie",
+  },
+  "familie-jahr": {
+    productId: "prod_Uo6sFeRclIj2oJ",
+    basisPreis: 129.99,
+    proKind: 79.99,
+    interval: "year" as const,
+    name: "Dreamland Familie Jahresabo",
+  },
 }
 
 export async function POST(req: NextRequest) {
@@ -18,7 +36,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Ungültiger Plan" }, { status: 400 })
     }
 
-    const betrag = planInfo.basisPreis + (kinder - 1) * planInfo.proKind
+    const betrag = planInfo.basisPreis + Math.max(0, kinder - 1) * planInfo.proKind
     const betragCents = Math.round(betrag * 100)
     const kindText = kinder === 1 ? "1 Kind" : `${kinder} Kinder`
 
@@ -30,10 +48,7 @@ export async function POST(req: NextRequest) {
         {
           price_data: {
             currency: "eur",
-            product_data: {
-              name: `${planInfo.name} – ${kindText}`,
-              description: "KI-Gute-Nacht-Geschichten für Kinder",
-            },
+            product: planInfo.productId,
             unit_amount: betragCents,
             recurring: {
               interval: planInfo.interval,
@@ -46,6 +61,9 @@ export async function POST(req: NextRequest) {
         uid,
         plan,
         kinder: String(kinder),
+      },
+      subscription_data: {
+        description: `${planInfo.name} – ${kindText}`,
       },
       success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/profile?checkout=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/preise`,
