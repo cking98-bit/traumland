@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 
-// Wandelt rohes PCM-Audio (von Gemini) in ein abspielbares WAV um
+export const runtime = "nodejs"
+export const maxDuration = 60
+
 function pcmToWav(pcm: Buffer, sampleRate = 24000): Buffer {
   const numChannels = 1
   const bitsPerSample = 16
@@ -14,7 +16,7 @@ function pcmToWav(pcm: Buffer, sampleRate = 24000): Buffer {
   header.write("WAVE", 8)
   header.write("fmt ", 12)
   header.writeUInt32LE(16, 16)
-  header.writeUInt16LE(1, 20) // PCM
+  header.writeUInt16LE(1, 20)
   header.writeUInt16LE(numChannels, 22)
   header.writeUInt32LE(sampleRate, 24)
   header.writeUInt32LE(byteRate, 28)
@@ -30,7 +32,10 @@ export async function POST(request: NextRequest) {
   try {
     const { text, geschlecht } = await request.json()
 
-    // Stimme nach Geschlecht wählen
+    if (!text?.trim()) {
+      return NextResponse.json({ fehler: "Kein Text" }, { status: 400 })
+    }
+
     const voiceName = geschlecht === "männlich" ? "Puck" : "Kore"
 
     const response = await fetch(
@@ -56,28 +61,20 @@ export async function POST(request: NextRequest) {
     )
 
     const data = await response.json()
-    const base64Pcm =
-      data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data
+    const base64Pcm = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data
 
     if (!base64Pcm) {
-      console.log("Keine Audio-Antwort:", JSON.stringify(data))
-      return NextResponse.json(
-        { fehler: "Audio konnte nicht erzeugt werden" },
-        { status: 500 }
-      )
+      console.error("Keine Audio-Antwort. HTTP:", response.status, JSON.stringify(data).slice(0, 300))
+      return NextResponse.json({ fehler: "Audio konnte nicht erzeugt werden" }, { status: 500 })
     }
 
-    // PCM in WAV umwandeln und als Daten-URL zurückgeben
     const pcm = Buffer.from(base64Pcm, "base64")
     const wav = pcmToWav(pcm)
     const wavBase64 = wav.toString("base64")
 
     return NextResponse.json({ audio: `data:audio/wav;base64,${wavBase64}` })
   } catch (error) {
-    console.log("TTS Fehler:", error)
-    return NextResponse.json(
-      { fehler: "Ein Fehler ist aufgetreten" },
-      { status: 500 }
-    )
+    console.error("TTS Fehler:", error)
+    return NextResponse.json({ fehler: "Ein Fehler ist aufgetreten" }, { status: 500 })
   }
 }

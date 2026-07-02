@@ -7,7 +7,7 @@ type AudioMitSink = HTMLAudioElement & {
   setSinkId?: (id: string) => Promise<void>
 }
 
-function textZuChunks(text: string, maxZeichen = 500): string[] {
+function textZuChunks(text: string, maxZeichen = 250): string[] {
   const absaetze = text.split(/\n+/).filter((p) => p.trim().length > 0)
   const chunks: string[] = []
   let aktuell = ""
