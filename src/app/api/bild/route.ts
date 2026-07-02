@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 
+export const runtime = "nodejs"
+export const maxDuration = 60
+
 export async function POST(request: NextRequest) {
   try {
     const { stichwörter, stil } = await request.json()
@@ -10,7 +13,7 @@ Weiche Pastellfarben, traumhafte nächtliche Stimmung, kindgerecht und beruhigen
 Keine Schrift oder Buchstaben im Bild.`
 
     const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent",
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent",
       {
         method: "POST",
         headers: {
@@ -28,15 +31,11 @@ Keine Schrift oder Buchstaben im Bild.`
 
     const data = await response.json()
     const parts = data.candidates?.[0]?.content?.parts || []
-    // Den Teil finden, der die Bilddaten enthält
     const bildTeil = parts.find((p: { inlineData?: { data?: string } }) => p.inlineData?.data)
 
     if (!bildTeil) {
-      console.log("Kein Bild. Antwort:", JSON.stringify(data))
-      return NextResponse.json(
-        { fehler: "Bild konnte nicht erzeugt werden" },
-        { status: 500 }
-      )
+      console.error("Kein Bild. HTTP:", response.status, JSON.stringify(data).slice(0, 300))
+      return NextResponse.json({ fehler: "Bild konnte nicht erzeugt werden" }, { status: 500 })
     }
 
     const mime = bildTeil.inlineData.mimeType || "image/png"
@@ -44,10 +43,7 @@ Keine Schrift oder Buchstaben im Bild.`
 
     return NextResponse.json({ bild })
   } catch (error) {
-    console.log("Bild Fehler:", error)
-    return NextResponse.json(
-      { fehler: "Ein Fehler ist aufgetreten" },
-      { status: 500 }
-    )
+    console.error("Bild Fehler:", error)
+    return NextResponse.json({ fehler: "Ein Fehler ist aufgetreten" }, { status: 500 })
   }
 }
