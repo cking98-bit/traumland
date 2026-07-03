@@ -3,7 +3,14 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { speichereGeschichte, speichereBild, istVoll, MAX_GESCHICHTEN } from "@/lib/geschichten"
+import {
+  speichereGeschichte,
+  speichereBild,
+  istVoll,
+  ladeGeschichteById,
+  MAX_GESCHICHTEN,
+  type Geschichte,
+} from "@/lib/geschichten"
 import { ladeProfile, berechneAlter, type Profil } from "@/lib/profile"
 import SchutzRoute from "@/components/SchutzRoute"
 import { useSprache } from "@/components/LanguageProvider"
@@ -30,13 +37,36 @@ export default function GeneratorPage() {
   const [geschichteSprache, setGeschichteSprache] = useState<"de" | "en">(sprache)
   const [laden, setLaden] = useState(false)
   const [fehler, setFehler] = useState("")
+  const [vorherige, setVorherige] = useState<Geschichte | null>(null)
 
   useEffect(() => {
     const geladen = ladeProfile()
     setProfile(geladen)
 
-    // Kind aus dem Link (?kind=...) vorauswählen, sonst erstes Profil
     const params = new URLSearchParams(window.location.search)
+
+    // Fortsetzung (?fortsetzung=<geschichtenId>): Felder aus der alten Geschichte übernehmen
+    const fortsetzungId = params.get("fortsetzung")
+    if (fortsetzungId) {
+      const alt = ladeGeschichteById(fortsetzungId)
+      if (alt) {
+        setVorherige(alt)
+        setStichwörter(alt.stichwörter)
+        setStil(alt.stil.split(",").map((s) => s.trim()).filter(Boolean))
+        setDauer(alt.dauer)
+        if (alt.sprache === "de" || alt.sprache === "en") {
+          setGeschichteSprache(alt.sprache)
+        }
+        // Kind mit gleichem Namen vorauswählen
+        const passendesKind = geladen.find((p) => p.name === alt.name)
+        if (passendesKind) {
+          setProfilId(passendesKind.id)
+          return
+        }
+      }
+    }
+
+    // Kind aus dem Link (?kind=...) vorauswählen, sonst erstes Profil
     const kindId = params.get("kind")
     if (kindId && geladen.some((p) => p.id === kindId)) {
       setProfilId(kindId)
@@ -88,6 +118,7 @@ export default function GeneratorPage() {
           sprache: geschichteSprache,
           uid: nutzer?.uid ?? null,
           profilId,
+          vorherigeGeschichte: vorherige?.geschichte ?? null,
         }),
       })
 
@@ -192,6 +223,17 @@ export default function GeneratorPage() {
           </div>
         ) : (
           <div className="bg-indigo-900 rounded-2xl p-8 flex flex-col gap-6">
+            {vorherige && (
+              <div className="bg-yellow-400/10 border border-yellow-400/40 rounded-xl px-4 py-3">
+                <p className="text-yellow-300 font-bold text-sm">
+                  {t("gen.fortsetzungBanner")}
+                </p>
+                <p className="text-yellow-200 text-xs mt-0.5">
+                  {t("gen.fortsetzungText")}
+                </p>
+              </div>
+            )}
+
             {fehler && (
               <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-xl px-4 py-3 text-sm">
                 {fehler}{" "}

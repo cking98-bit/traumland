@@ -39,13 +39,14 @@ export const texte: Record<Sprache, Dict> = {
 
     // Preise
     "preise.titel": "Wähle deinen Plan 🌙",
-    "preise.untertitel": "30 Geschichten pro Monat – pro Kind. Jederzeit weitere Kinder hinzufügen. Personalisiert, illustriert und auf Wunsch vorgelesen.",
+    "preise.untertitel": "Jeden Tag eine neue Geschichte – pro Kind. Jederzeit weitere Kinder hinzufügen. Personalisiert, illustriert und auf Wunsch vorgelesen.",
     "preise.banner.titel": "✨ Erste Geschichte gratis testen",
     "preise.banner.text": "Nach der Anmeldung erstellst du 1 kostenlose 2-Minuten-Geschichte – ganz ohne Zahlung.",
     "preise.banner.cta": "Kostenlos starten",
     "preise.kinder": "Kinder",
     "preise.einKind": "1 Kind inklusive",
     "preise.geschichtenProMonat": "Geschichten / Monat",
+    "preise.proTag": "Jeden Tag 1 neue Geschichte pro Kind",
     "preise.waehlen": "wählen",
     "preise.monat": "Monat",
     "preise.jahr": "Jahr",
@@ -239,8 +240,24 @@ export const texte: Record<Sprache, Dict> = {
     "login.passwortResetFehler": "E-Mail konnte nicht gesendet werden. Bitte prüfe die Adresse.",
     "login.zurueck": "← Zurück",
 
-    // Geschichten-Limit
-    "gen.fehler.limit": "Du hast diesen Monat das Limit von 30 Geschichten für dieses Kind erreicht. Nächsten Monat geht es weiter!",
+    // Geschichten-Limit (1 pro Tag pro Kind)
+    "gen.fehler.limit": "Für dieses Kind wurde heute schon eine Geschichte erstellt. Morgen geht es weiter! 🌙",
+
+    // Fortsetzung
+    "gen.fortsetzungBanner": "📖 Fortsetzung von der letzten Geschichte",
+    "gen.fortsetzungText": "Die neue Geschichte knüpft direkt an das letzte Abenteuer an.",
+    "bib.fortsetzung": "📖 Fortsetzung",
+    "reader.fortsetzung": "📖 Fortsetzung erstellen",
+
+    // Planwechsel
+    "wechsel.titel": "Tarif wechseln",
+    "wechsel.text": "Dein neuer Tarif {plan} gilt ab dem {datum}. Bis dahin läuft dein aktueller Tarif normal weiter – erst ab diesem Datum wird der neue Preis abgebucht.",
+    "wechsel.bestaetigen": "Wechsel bestätigen",
+    "wechsel.abbrechen": "Abbrechen",
+    "wechsel.erfolg": "Tarifwechsel gespeichert! Der neue Tarif gilt ab dem nächsten Abrechnungszeitraum.",
+    "wechsel.fehler": "Der Tarifwechsel ist fehlgeschlagen. Bitte versuche es erneut.",
+    "wechsel.jahrGesperrt": "Der Jahrestarif kann nicht gewechselt, sondern nur gekündigt werden.",
+    "abo.neuerTarifAb": "Neue Abrechnung ab",
 
     // Footer
     "footer.impressum": "Impressum",
@@ -273,13 +290,14 @@ export const texte: Record<Sprache, Dict> = {
     "feature.audio.info": "If you like, a natural AI voice (male or female) reads the story aloud. It's completely optional: the text is always included, so you can also read it yourself.",
 
     "preise.titel": "Choose your plan 🌙",
-    "preise.untertitel": "30 stories per month – per child. Add more children any time. Personalized, illustrated and optionally read aloud.",
+    "preise.untertitel": "A new story every day – per child. Add more children any time. Personalized, illustrated and optionally read aloud.",
     "preise.banner.titel": "✨ Try your first story for free",
     "preise.banner.text": "After signing up you create 1 free 2-minute story – no payment needed.",
     "preise.banner.cta": "Start for free",
     "preise.kinder": "Children",
     "preise.einKind": "1 child included",
     "preise.geschichtenProMonat": "stories / month",
+    "preise.proTag": "1 new story every day per child",
     "preise.waehlen": "Choose",
     "preise.monat": "month",
     "preise.jahr": "year",
@@ -471,8 +489,24 @@ export const texte: Record<Sprache, Dict> = {
     "login.passwortResetFehler": "Could not send email. Please check the address.",
     "login.zurueck": "← Back",
 
-    // Story limit
-    "gen.fehler.limit": "You have reached the limit of 30 stories for this child this month. Come back next month!",
+    // Story limit (1 per day per child)
+    "gen.fehler.limit": "A story has already been created for this child today. Come back tomorrow! 🌙",
+
+    // Sequel
+    "gen.fortsetzungBanner": "📖 Sequel to the last story",
+    "gen.fortsetzungText": "The new story picks up right where the last adventure ended.",
+    "bib.fortsetzung": "📖 Sequel",
+    "reader.fortsetzung": "📖 Create sequel",
+
+    // Plan change
+    "wechsel.titel": "Change plan",
+    "wechsel.text": "Your new plan {plan} starts on {datum}. Until then your current plan continues as normal – the new price is only charged from that date.",
+    "wechsel.bestaetigen": "Confirm change",
+    "wechsel.abbrechen": "Cancel",
+    "wechsel.erfolg": "Plan change saved! The new plan applies from the next billing period.",
+    "wechsel.fehler": "The plan change failed. Please try again.",
+    "wechsel.jahrGesperrt": "The yearly plan cannot be changed, only cancelled.",
+    "abo.neuerTarifAb": "New billing from",
 
     // Footer
     "footer.impressum": "Imprint",

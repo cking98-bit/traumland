@@ -81,15 +81,100 @@ function euro(n: number, sprache: Sprache) {
 
 function PlanKarte({ plan }: { plan: Plan }) {
   const { t, sprache } = useSprache()
-  const { nutzer } = useAuth()
+  const { nutzer, abo, aboNeuLaden } = useAuth()
   const router = useRouter()
   const [kinder, setKinder] = useState(1)
   const [laedt, setLaedt] = useState(false)
+  const [fehler, setFehler] = useState("")
+
+  // Planwechsel (wenn bereits ein Abo besteht)
+  const [zeigWechsel, setZeigWechsel] = useState(false)
+  const [wechselDatum, setWechselDatum] = useState<number | null>(null)
 
   const gesamtPreis = plan.basisPreis + (kinder - 1) * plan.proKind
-  const gesamtGeschichten =
-    plan.basisGeschichten + (kinder - 1) * plan.proKindGeschichten
   const periode = t(plan.periodeKey)
+
+  const hatAbo = !!abo && abo.status !== "gekuendigt"
+  const istAktuellerPlan = hatAbo && abo!.plan === plan.id
+
+  function formatDatum(ts: number) {
+    return new Date(ts * 1000).toLocaleDateString(
+      sprache === "de" ? "de-DE" : "en-GB",
+      { day: "2-digit", month: "long", year: "numeric" }
+    )
+  }
+
+  // Wechsel-Dialog öffnen: Datum des nächsten Abrechnungszeitraums holen
+  async function wechselStarten() {
+    if (!nutzer) return
+    if (abo!.plan === "familie-jahr") {
+      setFehler(t("wechsel.jahrGesperrt"))
+      return
+    }
+    setFehler("")
+    setLaedt(true)
+    try {
+      const res = await fetch(`/api/abo/details?uid=${nutzer.uid}`)
+      const data = await res.json()
+      setWechselDatum(data.nextBilling ?? null)
+      setZeigWechsel(true)
+    } catch {
+      setFehler(t("wechsel.fehler"))
+    } finally {
+      setLaedt(false)
+    }
+  }
+
+  async function wechselBestaetigen() {
+    if (!nutzer) return
+    setLaedt(true)
+    setFehler("")
+    try {
+      const res = await fetch("/api/abo/wechseln", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: nutzer.uid, plan: plan.id, kinder }),
+      })
+      const data = await res.json()
+      if (!data.ok) throw new Error()
+      await aboNeuLaden()
+      router.push("/abo")
+    } catch {
+      setFehler(t("wechsel.fehler"))
+      setLaedt(false)
+    }
+  }
+
+  async function neuAbschliessen() {
+    if (!nutzer) {
+      router.push("/login")
+      return
+    }
+    setLaedt(true)
+    setFehler("")
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          uid: nutzer.uid,
+          plan: plan.id,
+          kinder,
+          email: nutzer.email,
+        }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setFehler(t("wechsel.fehler"))
+        setLaedt(false)
+      }
+    } catch {
+      setFehler(t("wechsel.fehler"))
+      setLaedt(false)
+    }
+  }
 
   return (
     <div
@@ -148,7 +233,7 @@ function PlanKarte({ plan }: { plan: Plan }) {
             : `${t("preise.einKind")} · +${kinder - 1} × ${euro(plan.proKind, sprache)} / ${periode}`}
         </p>
         <p className="text-indigo-300 text-xs mt-1">
-          ✨ {gesamtGeschichten} {t("preise.geschichtenProMonat")}
+          ✨ {t("preise.proTag")}
         </p>
       </div>
 
@@ -161,41 +246,57 @@ function PlanKarte({ plan }: { plan: Plan }) {
         ))}
       </ul>
 
-      <button
-        disabled={laedt}
-        onClick={async () => {
-          if (!nutzer) {
-            router.push("/login")
-            return
-          }
-          setLaedt(true)
-          try {
-            const res = await fetch("/api/checkout", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                uid: nutzer.uid,
-                plan: plan.id,
-                kinder,
-                email: nutzer.email,
-              }),
-            })
-            const data = await res.json()
-            if (data.url) {
-              window.location.href = data.url
-            }
-          } catch {
-            setLaedt(false)
-          }
-        }}
-        className={`w-full font-bold py-3 rounded-xl transition disabled:opacity-60 ${
-          plan.beliebt
-            ? "bg-yellow-400 hover:bg-yellow-300 text-indigo-950"
-            : "bg-indigo-800 hover:bg-indigo-700 text-white"
-        }`}
-      >
-        {laedt ? "…" : `${t(plan.nameKey)} ${t("preise.waehlen")}`}
-      </button>
+      {fehler && (
+        <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-xl px-4 py-3 text-xs mb-4">
+          {fehler}
+        </div>
+      )}
+
+      {/* Wechsel-Bestätigung */}
+      {zeigWechsel ? (
+        <div className="bg-indigo-800 border border-yellow-400/40 rounded-xl p-4 mb-2">
+          <h3 className="text-white font-bold text-sm mb-2">{t("wechsel.titel")}</h3>
+          <p className="text-indigo-200 text-xs mb-4">
+            {t("wechsel.text")
+              .replace("{plan}", t(plan.nameKey))
+              .replace("{datum}", wechselDatum ? formatDatum(wechselDatum) : "–")}
+          </p>
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={wechselBestaetigen}
+              disabled={laedt}
+              className="w-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 text-indigo-950 font-bold py-2.5 rounded-lg text-sm transition"
+            >
+              {laedt ? "…" : t("wechsel.bestaetigen")}
+            </button>
+            <button
+              onClick={() => setZeigWechsel(false)}
+              disabled={laedt}
+              className="w-full bg-indigo-700 hover:bg-indigo-600 text-white font-bold py-2.5 rounded-lg text-sm transition"
+            >
+              {t("wechsel.abbrechen")}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          disabled={laedt || istAktuellerPlan}
+          onClick={hatAbo ? wechselStarten : neuAbschliessen}
+          className={`w-full font-bold py-3 rounded-xl transition disabled:opacity-60 ${
+            plan.beliebt
+              ? "bg-yellow-400 hover:bg-yellow-300 text-indigo-950"
+              : "bg-indigo-800 hover:bg-indigo-700 text-white"
+          }`}
+        >
+          {laedt
+            ? "…"
+            : istAktuellerPlan
+            ? `✓ ${t("abo.plan")}`
+            : hatAbo
+            ? `${t("wechsel.titel")}: ${t(plan.nameKey)}`
+            : `${t(plan.nameKey)} ${t("preise.waehlen")}`}
+        </button>
+      )}
     </div>
   )
 }

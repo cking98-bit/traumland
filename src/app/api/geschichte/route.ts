@@ -1,31 +1,58 @@
 import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/firebaseAdmin"
-import { FieldValue } from "firebase-admin/firestore"
 
 export const runtime = "nodejs"
+export const maxDuration = 60
 
-const LIMIT = 30
-
+// 1 Geschichte pro Tag pro Kind (unabhängig von der Monatslänge)
 export async function POST(request: NextRequest) {
   try {
-    const { name, alter, stichwörter, stile, dauer, sprache, uid, profilId } =
-      await request.json()
+    const {
+      name,
+      alter,
+      stichwörter,
+      stile,
+      dauer,
+      sprache,
+      uid,
+      profilId,
+      vorherigeGeschichte,
+    } = await request.json()
 
-    // Monatliches Geschichten-Limit pro Kind prüfen
+    // Tageslimit prüfen: pro Kind nur 1 Geschichte pro Kalendertag
     if (uid && profilId) {
-      const monat = new Date().toISOString().slice(0, 7) // "YYYY-MM"
-      const zaehlerRef = adminDb.collection("users").doc(uid).collection("zaehler").doc(monat)
+      const heute = new Date().toISOString().slice(0, 10) // "YYYY-MM-DD"
+      const zaehlerRef = adminDb.collection("users").doc(uid).collection("zaehler").doc(heute)
       const zaehlerSnap = await zaehlerRef.get()
       const zaehlerDaten = zaehlerSnap.data() ?? {}
-      const aktuellerZaehler = zaehlerDaten[profilId] ?? 0
 
-      if (aktuellerZaehler >= LIMIT) {
+      if ((zaehlerDaten[profilId] ?? 0) >= 1) {
         return NextResponse.json({ fehler: "limit" }, { status: 429 })
       }
     }
 
     // Vorlesen: ca. 130 Wörter pro Minute
     const wörter = Number(dauer) * 130
+
+    const fortsetzungBlockDe = vorherigeGeschichte
+      ? `
+
+Dies ist eine FORTSETZUNG. Hier ist die vorherige Geschichte:
+---
+${vorherigeGeschichte}
+---
+Die neue Geschichte muss nahtlos an die vorherige anknüpfen: gleiche Figuren, gleiche Welt, und sie greift auf, wo die letzte Geschichte aufgehört hat. Erinnere kurz und kindgerecht an das letzte Abenteuer, bevor das neue beginnt.`
+      : ""
+
+    const fortsetzungBlockEn = vorherigeGeschichte
+      ? `
+
+This is a SEQUEL. Here is the previous story:
+---
+${vorherigeGeschichte}
+---
+The new story must seamlessly continue the previous one: same characters, same world, picking up where the last story ended. Briefly and gently remind the child of the last adventure before the new one begins.`
+      : ""
 
     const prompt =
       sprache === "en"
@@ -37,7 +64,7 @@ Write a bedtime story in English with the following requirements:
 - Style: ${stile}
 - Length: about ${wörter} words (reading time approx. ${dauer} minutes)
 - Tone: simple, warm and soothing
-- Ending: calm and sleep-inducing
+- Ending: calm and sleep-inducing${fortsetzungBlockEn}
 
 Write ONLY the story, without a title or introduction.`
         : `Du bist ein einfühlsamer Geschichtenerzähler für Kinder.
@@ -48,7 +75,7 @@ Schreibe eine Gute-Nacht-Geschichte auf Deutsch mit folgenden Vorgaben:
 - Stil: ${stile}
 - Länge: ungefähr ${wörter} Wörter (Vorlesedauer ca. ${dauer} Minuten)
 - Sprache: einfach, warm und beruhigend
-- Ende: ruhig und einschläfernd
+- Ende: ruhig und einschläfernd${fortsetzungBlockDe}
 
 Schreibe NUR die Geschichte, ohne Titel oder Einleitung.`
 
@@ -76,23 +103,23 @@ Schreibe NUR die Geschichte, ohne Titel oder Einleitung.`
     const geschichte = data.candidates?.[0]?.content?.parts?.[0]?.text
 
     if (!geschichte) {
-      console.log("Keine Geschichte. Antwort:", JSON.stringify(data))
+      console.error("Keine Geschichte. Antwort:", JSON.stringify(data).slice(0, 300))
       return NextResponse.json(
         { fehler: "Keine Geschichte generiert" },
         { status: 500 }
       )
     }
 
-    // Zähler erhöhen
+    // Tageszähler setzen
     if (uid && profilId) {
-      const monat = new Date().toISOString().slice(0, 7)
-      const zaehlerRef = adminDb.collection("users").doc(uid).collection("zaehler").doc(monat)
-      await zaehlerRef.set({ [profilId]: FieldValue.increment(1) }, { merge: true })
+      const heute = new Date().toISOString().slice(0, 10)
+      const zaehlerRef = adminDb.collection("users").doc(uid).collection("zaehler").doc(heute)
+      await zaehlerRef.set({ [profilId]: 1 }, { merge: true })
     }
 
     return NextResponse.json({ geschichte })
   } catch (error) {
-    console.log("Fehler:", error)
+    console.error("Fehler:", error)
     return NextResponse.json(
       { fehler: "Ein Fehler ist aufgetreten" },
       { status: 500 }

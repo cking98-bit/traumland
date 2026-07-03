@@ -24,9 +24,12 @@ export async function GET(req: NextRequest) {
       const sub = await stripe.subscriptions.retrieve(abo.stripeSubscriptionId)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const s = sub as any
+      // Stripe API 2025+: current_period_end liegt auf dem Subscription-Item
+      const periodEnd =
+        s.current_period_end ?? s.items?.data?.[0]?.current_period_end ?? null
       return NextResponse.json({
         abo,
-        nextBilling: s.current_period_end ?? null,
+        nextBilling: periodEnd,
         cancelAtPeriodEnd: s.cancel_at_period_end ?? false,
       })
     } catch (stripeErr) {

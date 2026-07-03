@@ -61,7 +61,17 @@ export default function GeschichtePage() {
           </div>
         </div>
 
-        <div className="flex gap-4 mt-6">
+        {/* Fortsetzung – nur wenn die Geschichte gespeichert ist (id vorhanden) */}
+        {p?.id && (
+          <Link
+            href={`/generator?fortsetzung=${p.id}`}
+            className="block w-full bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-3 rounded-xl text-center transition mt-6"
+          >
+            {t("reader.fortsetzung")}
+          </Link>
+        )}
+
+        <div className="flex gap-4 mt-4">
           <Link
             href="/generator"
             className="flex-1 bg-indigo-800 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl text-center transition"
@@ -70,7 +80,7 @@ export default function GeschichtePage() {
           </Link>
           <Link
             href="/bibliothek"
-            className="flex-1 bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-3 rounded-xl text-center transition"
+            className="flex-1 bg-indigo-800 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl text-center transition"
           >
             {t("reader.zurBibliothek")}
           </Link>

@@ -13,6 +13,7 @@ type AboDetails = {
     kinder: number
     status?: string
     wird_gekuendigt?: boolean
+    wechsel_ab?: number
   }
   nextBilling: number | null
   cancelAtPeriodEnd: boolean
@@ -184,6 +185,19 @@ export default function AboPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-indigo-400 text-sm">{t("abo.naechsteAbrechnung")}</span>
                   <span className="text-white font-bold">{nextBillingFormatted}</span>
+                </div>
+              )}
+
+              {/* Geplanter Tarifwechsel: neuer Preis gilt ab diesem Datum */}
+              {details.abo.wechsel_ab && details.abo.wechsel_ab * 1000 > Date.now() && (
+                <div className="flex justify-between items-center">
+                  <span className="text-indigo-400 text-sm">{t("abo.neuerTarifAb")}</span>
+                  <span className="text-yellow-300 font-bold">
+                    {new Date(details.abo.wechsel_ab * 1000).toLocaleDateString(
+                      sprache === "de" ? "de-DE" : "en-GB",
+                      { day: "2-digit", month: "long", year: "numeric" }
+                    )}
+                  </span>
                 </div>
               )}
 

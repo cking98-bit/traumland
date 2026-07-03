@@ -128,6 +128,12 @@ export default function BibliothekPage() {
                   🗑
                 </button>
               </div>
+              <Link
+                href={`/generator?fortsetzung=${g.id}`}
+                className="mt-2 block w-full bg-indigo-800 hover:bg-indigo-700 text-white font-bold py-2 rounded-lg text-center text-sm transition"
+              >
+                {t("bib.fortsetzung")}
+              </Link>
             </div>
           </div>
         ))}
