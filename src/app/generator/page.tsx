@@ -30,6 +30,7 @@ export default function GeneratorPage() {
   const { nutzer } = useAuth()
 
   const [profile, setProfile] = useState<Profil[]>([])
+  const [profileGeladen, setProfileGeladen] = useState(false)
   const [profilId, setProfilId] = useState("")
   const [stichwörter, setStichwörter] = useState("")
   const [stil, setStil] = useState<string[]>([])
@@ -48,40 +49,44 @@ export default function GeneratorPage() {
   } | null>(null)
 
   useEffect(() => {
-    const geladen = ladeProfile()
-    setProfile(geladen)
+    if (!nutzer) return
 
-    const params = new URLSearchParams(window.location.search)
+    ladeProfile(nutzer.uid).then((geladen) => {
+      setProfile(geladen)
+      setProfileGeladen(true)
 
-    // Fortsetzung (?fortsetzung=<geschichtenId>): Felder aus der alten Geschichte übernehmen
-    const fortsetzungId = params.get("fortsetzung")
-    if (fortsetzungId) {
-      const alt = ladeGeschichteById(fortsetzungId)
-      if (alt) {
-        setVorherige(alt)
-        setStichwörter(alt.stichwörter)
-        setStil(alt.stil.split(",").map((s) => s.trim()).filter(Boolean))
-        setDauer(alt.dauer)
-        if (alt.sprache === "de" || alt.sprache === "en") {
-          setGeschichteSprache(alt.sprache)
-        }
-        // Kind mit gleichem Namen vorauswählen
-        const passendesKind = geladen.find((p) => p.name === alt.name)
-        if (passendesKind) {
-          setProfilId(passendesKind.id)
-          return
+      const params = new URLSearchParams(window.location.search)
+
+      // Fortsetzung (?fortsetzung=<geschichtenId>): Felder aus der alten Geschichte übernehmen
+      const fortsetzungId = params.get("fortsetzung")
+      if (fortsetzungId) {
+        const alt = ladeGeschichteById(fortsetzungId)
+        if (alt) {
+          setVorherige(alt)
+          setStichwörter(alt.stichwörter)
+          setStil(alt.stil.split(",").map((s) => s.trim()).filter(Boolean))
+          setDauer(alt.dauer)
+          if (alt.sprache === "de" || alt.sprache === "en") {
+            setGeschichteSprache(alt.sprache)
+          }
+          // Kind mit gleichem Namen vorauswählen
+          const passendesKind = geladen.find((p) => p.name === alt.name)
+          if (passendesKind) {
+            setProfilId(passendesKind.id)
+            return
+          }
         }
       }
-    }
 
-    // Kind aus dem Link (?kind=...) vorauswählen, sonst erstes Profil
-    const kindId = params.get("kind")
-    if (kindId && geladen.some((p) => p.id === kindId)) {
-      setProfilId(kindId)
-    } else if (geladen.length > 0) {
-      setProfilId(geladen[0].id)
-    }
-  }, [])
+      // Kind aus dem Link (?kind=...) vorauswählen, sonst erstes Profil
+      const kindId = params.get("kind")
+      if (kindId && geladen.some((p) => p.id === kindId)) {
+        setProfilId(kindId)
+      } else if (geladen.length > 0) {
+        setProfilId(geladen[0].id)
+      }
+    })
+  }, [nutzer])
 
   // Zähler laden, sobald Nutzer + Kind feststehen
   useEffect(() => {
@@ -225,8 +230,13 @@ export default function GeneratorPage() {
         <h1 className="text-3xl font-bold text-white mb-2">{t("gen.titel")}</h1>
         <p className="text-indigo-300 mb-8">{t("gen.untertitel")}</p>
 
-        {/* Kein Profil vorhanden → zuerst anlegen */}
-        {profile.length === 0 ? (
+        {/* Profile werden geladen */}
+        {!profileGeladen ? (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+            <div className="text-5xl animate-bounce">🌙</div>
+            <p className="text-indigo-300">…</p>
+          </div>
+        ) : profile.length === 0 ? (
           <div className="bg-indigo-900 rounded-2xl p-10 text-center">
             <div className="text-5xl mb-3">👧</div>
             <h2 className="text-white text-xl font-bold mb-2">

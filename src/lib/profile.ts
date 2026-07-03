@@ -1,3 +1,6 @@
+import { doc, getDoc, setDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase"
+
 // Ein Kinder-Profil
 export type Profil = {
   id: string
@@ -21,7 +24,8 @@ export function berechneAlter(geburtsdatum: string): number {
   return Math.max(0, alter)
 }
 
-export function ladeProfile(): Profil[] {
+// Lokale Profile (altes Format) – nur noch für die einmalige Migration
+function ladeLokaleProfile(): Profil[] {
   if (typeof window === "undefined") return []
   try {
     const roh = localStorage.getItem(SCHLUESSEL)
@@ -31,16 +35,48 @@ export function ladeProfile(): Profil[] {
   }
 }
 
-export function speichereProfil(p: Omit<Profil, "id">): string {
-  if (typeof window === "undefined") return ""
-  const alle = ladeProfile()
-  const neu: Profil = { ...p, id: crypto.randomUUID() }
-  localStorage.setItem(SCHLUESSEL, JSON.stringify([...alle, neu]))
-  return neu.id
+// Profile aus Firestore laden – hängen am Nutzer-Account,
+// damit sie auf allen Geräten gleich sind
+export async function ladeProfile(uid: string): Promise<Profil[]> {
+  if (!db) return ladeLokaleProfile()
+  try {
+    const snap = await getDoc(doc(db, "users", uid))
+    const profile = snap.data()?.profile as Profil[] | undefined
+
+    if (profile && profile.length > 0) return profile
+
+    // Migration: Profile aus localStorage einmalig in den Account übernehmen
+    const lokal = ladeLokaleProfile()
+    if (lokal.length > 0) {
+      await setDoc(doc(db, "users", uid), { profile: lokal }, { merge: true })
+      return lokal
+    }
+
+    return []
+  } catch (e) {
+    console.error("Profile laden fehlgeschlagen:", e)
+    return ladeLokaleProfile()
+  }
 }
 
-export function loescheProfil(id: string) {
-  if (typeof window === "undefined") return
-  const alle = ladeProfile().filter((p) => p.id !== id)
-  localStorage.setItem(SCHLUESSEL, JSON.stringify(alle))
+export async function speichereProfil(
+  uid: string,
+  p: Omit<Profil, "id">
+): Promise<{ id: string; profile: Profil[] }> {
+  const alle = await ladeProfile(uid)
+  const neu: Profil = { ...p, id: crypto.randomUUID() }
+  const neueListe = [...alle, neu]
+  if (db) {
+    await setDoc(doc(db, "users", uid), { profile: neueListe }, { merge: true })
+  }
+  return { id: neu.id, profile: neueListe }
+}
+
+export async function loescheProfil(uid: string, id: string): Promise<Profil[]> {
+  const alle = await ladeProfile(uid)
+  const neueListe = alle.filter((p) => p.id !== id)
+  if (db) {
+    await setDoc(doc(db, "users", uid), { profile: neueListe }, { merge: true })
+  }
+  return neueListe
 }

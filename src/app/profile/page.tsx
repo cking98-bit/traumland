@@ -22,6 +22,7 @@ export default function ProfilePage() {
   const { abo, nutzer, aboNeuLaden } = useAuth()
 
   const [profile, setProfile] = useState<Profil[]>([])
+  const [profileGeladen, setProfileGeladen] = useState(false)
   const [name, setName] = useState("")
   const [tag, setTag] = useState("")
   const [monat, setMonat] = useState("")
@@ -49,10 +50,15 @@ export default function ProfilePage() {
       : ""
 
   useEffect(() => {
-    setProfile(ladeProfile())
-  }, [])
+    if (!nutzer) return
+    ladeProfile(nutzer.uid).then((p) => {
+      setProfile(p)
+      setProfileGeladen(true)
+    })
+  }, [nutzer])
 
-  function hinzufuegen() {
+  async function hinzufuegen() {
+    if (!nutzer) return
     if (!name.trim()) {
       setFehler(t("profil.fehler.name"))
       return
@@ -65,8 +71,11 @@ export default function ProfilePage() {
       setFehler(t("profil.fehler.alt"))
       return
     }
-    speichereProfil({ name: name.trim(), geburtsdatum })
-    setProfile(ladeProfile())
+    const { profile: neueListe } = await speichereProfil(nutzer.uid, {
+      name: name.trim(),
+      geburtsdatum,
+    })
+    setProfile(neueListe)
     setName("")
     setTag("")
     setMonat("")
@@ -74,9 +83,10 @@ export default function ProfilePage() {
     setFehler("")
   }
 
-  function entfernen(id: string) {
-    loescheProfil(id)
-    setProfile(ladeProfile())
+  async function entfernen(id: string) {
+    if (!nutzer) return
+    const neueListe = await loescheProfil(nutzer.uid, id)
+    setProfile(neueListe)
   }
 
   async function weiteresKindBestaetigen() {
@@ -96,9 +106,12 @@ export default function ProfilePage() {
     setAddLaedt(true)
     try {
       await erhoeheKinder(nutzer.uid)
-      speichereProfil({ name: addName.trim(), geburtsdatum: addGeburtsdatum })
+      const { profile: neueListe } = await speichereProfil(nutzer.uid, {
+        name: addName.trim(),
+        geburtsdatum: addGeburtsdatum,
+      })
       await aboNeuLaden()
-      setProfile(ladeProfile())
+      setProfile(neueListe)
       setZeigAddForm(false)
       setAddName("")
       setAddTag("")
@@ -125,7 +138,7 @@ export default function ProfilePage() {
 
   return (
     <SchutzRoute abo>
-      {!abo ? (
+      {!abo || !profileGeladen ? (
         <div className="flex items-center justify-center min-h-[40vh] text-indigo-300">
           …
         </div>
