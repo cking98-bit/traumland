@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { adminDb } from "@/lib/firebaseAdmin"
+import { FieldValue } from "firebase-admin/firestore"
 
 export const runtime = "nodejs"
 
@@ -21,8 +22,14 @@ export async function POST(req: NextRequest) {
     cancel_at_period_end: true,
   })
 
+  // Kündigung macht einen evtl. vorgemerkten Tarifwechsel hinfällig
   await adminDb.collection("users").doc(uid).set(
-    { abo: { wird_gekuendigt: true } },
+    {
+      abo: {
+        wird_gekuendigt: true,
+        naechster_plan: FieldValue.delete(),
+      },
+    },
     { merge: true }
   )
 

@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/firebaseAdmin"
+import { FieldValue } from "firebase-admin/firestore"
+import { holeKontingent } from "@/lib/kontingent"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
 
-// 1 Geschichte pro Tag pro Kind (unabhängig von der Monatslänge)
+// Kontingent: so viele Geschichten wie Tage im Abrechnungszeitraum,
+// frei einteilbar (auch mehrere pro Tag)
 export async function POST(request: NextRequest) {
   try {
     const {
@@ -19,14 +22,10 @@ export async function POST(request: NextRequest) {
       vorherigeGeschichte,
     } = await request.json()
 
-    // Tageslimit prüfen: pro Kind nur 1 Geschichte pro Kalendertag
+    // Kontingent prüfen
     if (uid && profilId) {
-      const heute = new Date().toISOString().slice(0, 10) // "YYYY-MM-DD"
-      const zaehlerRef = adminDb.collection("users").doc(uid).collection("zaehler").doc(heute)
-      const zaehlerSnap = await zaehlerRef.get()
-      const zaehlerDaten = zaehlerSnap.data() ?? {}
-
-      if ((zaehlerDaten[profilId] ?? 0) >= 1) {
+      const kontingent = await holeKontingent(uid, profilId)
+      if (kontingent.verbleibend <= 0) {
         return NextResponse.json({ fehler: "limit" }, { status: 429 })
       }
     }
@@ -110,11 +109,11 @@ Schreibe NUR die Geschichte, ohne Titel oder Einleitung.`
       )
     }
 
-    // Tageszähler setzen
+    // Zähler des heutigen Tages erhöhen (mehrere pro Tag möglich)
     if (uid && profilId) {
       const heute = new Date().toISOString().slice(0, 10)
       const zaehlerRef = adminDb.collection("users").doc(uid).collection("zaehler").doc(heute)
-      await zaehlerRef.set({ [profilId]: 1 }, { merge: true })
+      await zaehlerRef.set({ [profilId]: FieldValue.increment(1) }, { merge: true })
     }
 
     return NextResponse.json({ geschichte })

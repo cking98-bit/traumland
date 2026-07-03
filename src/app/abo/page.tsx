@@ -35,6 +35,7 @@ export default function AboPage() {
   const [kuendigtLaedt, setKuendigtLaedt] = useState(false)
   const [erfolg, setErfolg] = useState("")
   const [kuendigenFehler, setKuendigenFehler] = useState("")
+  const [widerrufLaedt, setWiderrufLaedt] = useState(false)
 
   useEffect(() => {
     // Warten bis Auth fertig geladen
@@ -94,6 +95,31 @@ export default function AboPage() {
       setKuendigenFehler(t("abo.kuendigenFehler"))
     } finally {
       setKuendigtLaedt(false)
+    }
+  }
+
+  async function wechselWiderrufen() {
+    if (!nutzer) return
+    setWiderrufLaedt(true)
+    setErfolg("")
+    setFehler("")
+    try {
+      const res = await fetch("/api/abo/wechsel-widerrufen", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uid: nutzer.uid }),
+      })
+      const data = await res.json()
+      if (!data.ok) throw new Error()
+      setErfolg(t("wechsel.widerrufenErfolg"))
+      await aboNeuLaden()
+      const r2 = await fetch(`/api/abo/details?uid=${nutzer.uid}`)
+      const d2 = await r2.json()
+      if (!d2.fehler) setDetails(d2)
+    } catch {
+      setFehler(t("wechsel.widerrufenFehler"))
+    } finally {
+      setWiderrufLaedt(false)
     }
   }
 
@@ -228,10 +254,19 @@ export default function AboPage() {
             {/* Nächster Plan (bei anstehendem Tarifwechsel) */}
             {naechster && (
               <div className="bg-indigo-900 border border-yellow-400/40 rounded-2xl p-6 flex flex-col gap-4">
-                <h2 className="text-yellow-300 font-bold">{t("abo.naechsterPlan")}</h2>
+                <div className="flex justify-between items-center">
+                  <h2 className="text-yellow-300 font-bold">{t("abo.naechsterPlan")}</h2>
+                  <button
+                    onClick={wechselWiderrufen}
+                    disabled={widerrufLaedt}
+                    className="text-indigo-400 hover:text-red-300 text-xs underline transition disabled:opacity-50"
+                  >
+                    {widerrufLaedt ? "…" : t("wechsel.widerrufen")}
+                  </button>
+                </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-indigo-400 text-sm">{t("abo.plan")}</span>
+                  <span className="text-indigo-400 text-sm">{t("abo.neuerPlan")}</span>
                   <span className="text-white font-bold">{planNameFuer(naechster.plan)}</span>
                 </div>
 
@@ -248,7 +283,7 @@ export default function AboPage() {
                 </div>
 
                 <div className="flex justify-between items-center">
-                  <span className="text-indigo-400 text-sm">{t("abo.naechsteAbrechnungAb")}</span>
+                  <span className="text-indigo-400 text-sm">{t("abo.startAb")}</span>
                   <span className="text-yellow-300 font-bold">{formatDatum(naechster.ab)}</span>
                 </div>
               </div>

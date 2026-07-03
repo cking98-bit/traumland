@@ -6,7 +6,7 @@ import Link from "next/link"
 import {
   speichereGeschichte,
   speichereBild,
-  istVoll,
+  zaehleGeschichten,
   ladeGeschichteById,
   MAX_GESCHICHTEN,
   type Geschichte,
@@ -40,18 +40,22 @@ export default function GeneratorPage() {
   const [fehler, setFehler] = useState("")
   const [vorherige, setVorherige] = useState<Geschichte | null>(null)
 
-  // Geschichten-Zähler für den laufenden Abrechnungszeitraum
+  // Geschichten-Kontingent für den laufenden Abrechnungszeitraum
   const [zaehler, setZaehler] = useState<{
     erstellt: number
     gesamt: number
     verbleibend: number
-    heuteErstellt: boolean
   } | null>(null)
+
+  // Anzahl gespeicherter Geschichten (Bibliothek, max. 5)
+  const [anzahlGeschichten, setAnzahlGeschichten] = useState(0)
 
   useEffect(() => {
     if (!nutzer) return
 
-    ladeProfile(nutzer.uid).then((geladen) => {
+    zaehleGeschichten(nutzer.uid).then(setAnzahlGeschichten)
+
+    ladeProfile(nutzer.uid).then(async (geladen) => {
       setProfile(geladen)
       setProfileGeladen(true)
 
@@ -60,7 +64,7 @@ export default function GeneratorPage() {
       // Fortsetzung (?fortsetzung=<geschichtenId>): Felder aus der alten Geschichte übernehmen
       const fortsetzungId = params.get("fortsetzung")
       if (fortsetzungId) {
-        const alt = ladeGeschichteById(fortsetzungId)
+        const alt = await ladeGeschichteById(nutzer.uid, fortsetzungId)
         if (alt) {
           setVorherige(alt)
           setStichwörter(alt.stichwörter)
@@ -107,8 +111,10 @@ export default function GeneratorPage() {
     )
   }
 
+  const bibliothekVoll = anzahlGeschichten >= MAX_GESCHICHTEN
+
   function validieren() {
-    if (istVoll())
+    if (bibliothekVoll)
       return t("gen.fehler.voll").replace("{n}", String(MAX_GESCHICHTEN))
     if (!ausgewählt) return t("gen.fehler.kind")
     if (!stichwörter.trim()) return t("gen.fehler.stichwort")
@@ -117,6 +123,7 @@ export default function GeneratorPage() {
   }
 
   async function handleSubmit() {
+    if (!nutzer) return
     const fehlerText = validieren()
     if (fehlerText) {
       setFehler(fehlerText)
@@ -161,7 +168,7 @@ export default function GeneratorPage() {
       }
 
       const stilText = stil.join(", ")
-      const id = speichereGeschichte({
+      const id = await speichereGeschichte(nutzer.uid, {
         name: ausgewählt!.name,
         alter,
         stichwörter,
@@ -180,7 +187,7 @@ export default function GeneratorPage() {
         })
           .then((r) => r.json())
           .then((b) => {
-            if (b.bild) speichereBild(id, b.bild)
+            if (b.bild) speichereBild(nutzer.uid, id, b.bild)
           })
           .catch(() => {}) // Fehler still ignorieren – Illustration zeigt Fallback
       }
@@ -252,11 +259,11 @@ export default function GeneratorPage() {
           </div>
         ) : (
           <div className="bg-indigo-900 rounded-2xl p-8 flex flex-col gap-6">
-            {/* Geschichten-Zähler für den Abrechnungszeitraum */}
+            {/* Geschichten-Kontingent für den Abrechnungszeitraum */}
             {zaehler && (
               <div
                 className={`rounded-xl px-4 py-3 text-sm ${
-                  zaehler.heuteErstellt
+                  zaehler.verbleibend <= 0
                     ? "bg-orange-500/10 border border-orange-400/40 text-orange-300"
                     : "bg-indigo-800/60 border border-indigo-700 text-indigo-200"
                 }`}
@@ -267,9 +274,6 @@ export default function GeneratorPage() {
                     .replace("{verbleibend}", String(zaehler.verbleibend))
                     .replace("{gesamt}", String(zaehler.gesamt))}
                 </p>
-                {zaehler.heuteErstellt && (
-                  <p className="text-xs mt-1">{t("gen.zaehlerHeute")}</p>
-                )}
               </div>
             )}
 
@@ -287,7 +291,7 @@ export default function GeneratorPage() {
             {fehler && (
               <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-xl px-4 py-3 text-sm">
                 {fehler}{" "}
-                {istVoll() && (
+                {bibliothekVoll && (
                   <a href="/bibliothek" className="underline font-bold">
                     {t("gen.zurBibliothek")}
                   </a>

@@ -39,14 +39,14 @@ export const texte: Record<Sprache, Dict> = {
 
     // Preise
     "preise.titel": "Wähle deinen Plan 🌙",
-    "preise.untertitel": "Jeden Tag eine neue Geschichte – pro Kind. Jederzeit weitere Kinder hinzufügen. Personalisiert, illustriert und auf Wunsch vorgelesen.",
+    "preise.untertitel": "Ein Kontingent von ca. 30 Geschichten pro Abrechnungsmonat – pro Kind, frei einteilbar. Personalisiert, illustriert und auf Wunsch vorgelesen.",
     "preise.banner.titel": "✨ Erste Geschichte gratis testen",
     "preise.banner.text": "Nach der Anmeldung erstellst du 1 kostenlose 2-Minuten-Geschichte – ganz ohne Zahlung.",
     "preise.banner.cta": "Kostenlos starten",
     "preise.kinder": "Kinder",
     "preise.einKind": "1 Kind inklusive",
     "preise.geschichtenProMonat": "Geschichten / Monat",
-    "preise.proTag": "Jeden Tag 1 neue Geschichte pro Kind",
+    "preise.proTag": "≈30 Geschichten pro Monat & Kind – frei einteilbar",
     "preise.waehlen": "wählen",
     "preise.monat": "Monat",
     "preise.jahr": "Jahr",
@@ -240,8 +240,8 @@ export const texte: Record<Sprache, Dict> = {
     "login.passwortResetFehler": "E-Mail konnte nicht gesendet werden. Bitte prüfe die Adresse.",
     "login.zurueck": "← Zurück",
 
-    // Geschichten-Limit (1 pro Tag pro Kind)
-    "gen.fehler.limit": "Für dieses Kind wurde heute schon eine Geschichte erstellt. Morgen geht es weiter! 🌙",
+    // Geschichten-Kontingent aufgebraucht
+    "gen.fehler.limit": "Das Geschichten-Kontingent für dieses Kind ist in diesem Abrechnungszeitraum aufgebraucht. Mit der nächsten Abrechnung geht es weiter! 🌙",
 
     // Fortsetzung
     "gen.fortsetzungBanner": "📖 Fortsetzung von der letzten Geschichte",
@@ -257,14 +257,17 @@ export const texte: Record<Sprache, Dict> = {
     "wechsel.erfolg": "Tarifwechsel gespeichert! Der neue Tarif gilt ab dem nächsten Abrechnungszeitraum.",
     "wechsel.fehler": "Der Tarifwechsel ist fehlgeschlagen. Bitte versuche es erneut.",
     "wechsel.jahrGesperrt": "Der Jahrestarif kann nicht gewechselt, sondern nur gekündigt werden.",
+    "wechsel.widerrufen": "Tarifwechsel widerrufen",
+    "wechsel.widerrufenErfolg": "Der Tarifwechsel wurde widerrufen – dein aktueller Tarif läuft normal weiter.",
+    "wechsel.widerrufenFehler": "Der Widerruf ist fehlgeschlagen. Bitte versuche es erneut.",
     "abo.neuerTarifAb": "Neue Abrechnung ab",
     "abo.naechsterPlan": "Nächster Plan",
+    "abo.neuerPlan": "Neuer Plan",
     "abo.laufzeitBis": "Laufzeit bis",
-    "abo.naechsteAbrechnungAb": "Nächste Abrechnung",
+    "abo.startAb": "Start ab",
 
-    // Geschichten-Zähler
+    // Geschichten-Kontingent
     "gen.zaehler": "{verbleibend} von {gesamt} Geschichten im aktuellen Abrechnungszeitraum verfügbar",
-    "gen.zaehlerHeute": "Heute wurde für dieses Kind schon eine Geschichte erstellt – morgen geht es weiter 🌙",
 
     // Footer
     "footer.impressum": "Impressum",
@@ -297,14 +300,14 @@ export const texte: Record<Sprache, Dict> = {
     "feature.audio.info": "If you like, a natural AI voice (male or female) reads the story aloud. It's completely optional: the text is always included, so you can also read it yourself.",
 
     "preise.titel": "Choose your plan 🌙",
-    "preise.untertitel": "A new story every day – per child. Add more children any time. Personalized, illustrated and optionally read aloud.",
+    "preise.untertitel": "A quota of about 30 stories per billing month – per child, use them any time. Personalized, illustrated and optionally read aloud.",
     "preise.banner.titel": "✨ Try your first story for free",
     "preise.banner.text": "After signing up you create 1 free 2-minute story – no payment needed.",
     "preise.banner.cta": "Start for free",
     "preise.kinder": "Children",
     "preise.einKind": "1 child included",
     "preise.geschichtenProMonat": "stories / month",
-    "preise.proTag": "1 new story every day per child",
+    "preise.proTag": "≈30 stories per month & child – use them any time",
     "preise.waehlen": "Choose",
     "preise.monat": "month",
     "preise.jahr": "year",
@@ -496,8 +499,8 @@ export const texte: Record<Sprache, Dict> = {
     "login.passwortResetFehler": "Could not send email. Please check the address.",
     "login.zurueck": "← Back",
 
-    // Story limit (1 per day per child)
-    "gen.fehler.limit": "A story has already been created for this child today. Come back tomorrow! 🌙",
+    // Story quota exhausted
+    "gen.fehler.limit": "The story quota for this child is used up for this billing period. It continues with the next billing cycle! 🌙",
 
     // Sequel
     "gen.fortsetzungBanner": "📖 Sequel to the last story",
@@ -513,14 +516,17 @@ export const texte: Record<Sprache, Dict> = {
     "wechsel.erfolg": "Plan change saved! The new plan applies from the next billing period.",
     "wechsel.fehler": "The plan change failed. Please try again.",
     "wechsel.jahrGesperrt": "The yearly plan cannot be changed, only cancelled.",
+    "wechsel.widerrufen": "Revoke plan change",
+    "wechsel.widerrufenErfolg": "The plan change has been revoked – your current plan continues as normal.",
+    "wechsel.widerrufenFehler": "Revoking failed. Please try again.",
     "abo.neuerTarifAb": "New billing from",
     "abo.naechsterPlan": "Next plan",
+    "abo.neuerPlan": "New plan",
     "abo.laufzeitBis": "Active until",
-    "abo.naechsteAbrechnungAb": "Next billing",
+    "abo.startAb": "Starts on",
 
-    // Story counter
+    // Story quota
     "gen.zaehler": "{verbleibend} of {gesamt} stories available in the current billing period",
-    "gen.zaehlerHeute": "A story has already been created for this child today – come back tomorrow 🌙",
 
     // Footer
     "footer.impressum": "Imprint",

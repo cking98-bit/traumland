@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { speichereBild } from "@/lib/geschichten"
+import { speichereBild, ladeGeschichteById } from "@/lib/geschichten"
 import { useSprache } from "@/components/LanguageProvider"
+import { useAuth } from "@/components/AuthProvider"
 
 export default function Illustration({
   stichwörter,
@@ -16,15 +17,29 @@ export default function Illustration({
   vorhandenessBild?: string
 }) {
   const { t } = useSprache()
+  const { nutzer } = useAuth()
   const [bild, setBild] = useState<string | null>(vorhandenessBild || null)
   const [laden, setLaden] = useState(false)
   const [fehler, setFehler] = useState("")
 
   useEffect(() => {
-    // Nicht neu generieren wenn schon ein Bild vorhanden
     if (bild) return
-    erzeugen()
-  }, [])
+
+    // Gespeichertes Bild aus der Bibliothek laden – nur generieren wenn keins da ist
+    if (geschichteId && nutzer) {
+      ladeGeschichteById(nutzer.uid, geschichteId).then((g) => {
+        if (g?.bild) {
+          setBild(g.bild)
+        } else {
+          erzeugen()
+        }
+      })
+      return
+    }
+
+    if (nutzer !== undefined) erzeugen()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geschichteId, nutzer])
 
   async function erzeugen() {
     setFehler("")
@@ -45,8 +60,8 @@ export default function Illustration({
       setBild(data.bild)
 
       // Bild in der Bibliothek speichern falls wir eine ID haben
-      if (geschichteId) {
-        speichereBild(geschichteId, data.bild)
+      if (geschichteId && nutzer) {
+        speichereBild(nutzer.uid, geschichteId, data.bild)
       }
     } catch {
       setFehler(t("illu.fehler"))
@@ -101,4 +116,3 @@ export default function Illustration({
 
   return null
 }
-

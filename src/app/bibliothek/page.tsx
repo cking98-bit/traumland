@@ -10,20 +10,26 @@ import {
 } from "@/lib/geschichten"
 import SchutzRoute from "@/components/SchutzRoute"
 import { useSprache } from "@/components/LanguageProvider"
+import { useAuth } from "@/components/AuthProvider"
 
 export default function BibliothekPage() {
   const { t, sprache } = useSprache()
+  const { nutzer } = useAuth()
   const [geschichten, setGeschichten] = useState<Geschichte[]>([])
   const [geladen, setGeladen] = useState(false)
 
   useEffect(() => {
-    setGeschichten(ladeGeschichten())
-    setGeladen(true)
-  }, [])
+    if (!nutzer) return
+    ladeGeschichten(nutzer.uid).then((liste) => {
+      setGeschichten(liste)
+      setGeladen(true)
+    })
+  }, [nutzer])
 
-  function entfernen(id: string) {
-    löscheGeschichte(id)
-    setGeschichten(ladeGeschichten())
+  async function entfernen(id: string) {
+    if (!nutzer) return
+    await löscheGeschichte(nutzer.uid, id)
+    setGeschichten(await ladeGeschichten(nutzer.uid))
   }
 
   function geschichteLink(g: Geschichte) {
@@ -65,6 +71,14 @@ export default function BibliothekPage() {
       )}
 
       <p className="text-indigo-300 mb-8">{t("bib.untertitel")}</p>
+
+      {/* Ladezustand */}
+      {!geladen && (
+        <div className="flex flex-col items-center justify-center min-h-[30vh] gap-4">
+          <div className="text-5xl animate-bounce">🌙</div>
+          <p className="text-indigo-300">…</p>
+        </div>
+      )}
 
       {/* Leerer Zustand */}
       {geladen && geschichten.length === 0 && (
