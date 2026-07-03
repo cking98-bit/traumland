@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { verifiziereNutzer } from "@/lib/serverAuth"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -30,6 +31,9 @@ function pcmToWav(pcm: Buffer, sampleRate = 24000): Buffer {
 
 export async function POST(request: NextRequest) {
   try {
+    const uid = await verifiziereNutzer(request)
+    if (!uid) return NextResponse.json({ fehler: "Nicht angemeldet" }, { status: 401 })
+
     const { text, geschlecht } = await request.json()
 
     if (!text?.trim()) {

@@ -10,8 +10,24 @@ import Footer from "@/components/Footer"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Dreamland - AI Bedtime Stories",
-  description: "Personalized AI bedtime stories for your child",
+  title: "Dreamland – KI-Gute-Nacht-Geschichten für dein Kind",
+  description:
+    "Jeden Abend eine neue, personalisierte Gute-Nacht-Geschichte – mit Illustration und Vorlesestimme. Erste Geschichte gratis testen.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: "/icon-192.png",
+    apple: "/icon-192.png",
+  },
+  openGraph: {
+    title: "Dreamland – KI-Gute-Nacht-Geschichten",
+    description:
+      "Personalisierte Gute-Nacht-Geschichten für dein Kind – illustriert und vorgelesen.",
+    images: ["/demo-bild.png"],
+  },
+}
+
+export const viewport = {
+  themeColor: "#1e1b4b",
 }
 
 export default function RootLayout({

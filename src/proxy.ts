@@ -1,7 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 
 // Seiten die OHNE Login erreichbar sind
-const öffentlicheSeiten = ["/", "/login", "/preise", "/impressum", "/datenschutz"]
+const öffentlicheSeiten = [
+  "/",
+  "/login",
+  "/preise",
+  "/impressum",
+  "/datenschutz",
+  "/agb",
+  "/widerruf",
+  "/kuendigen",
+]
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl

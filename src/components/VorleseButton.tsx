@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react"
 import { useSprache } from "@/components/LanguageProvider"
+import { authFetch } from "@/lib/apiClient"
 
 type AudioMitSink = HTMLAudioElement & {
   setSinkId?: (id: string) => Promise<void>
@@ -24,19 +25,29 @@ function textZuChunks(text: string, maxZeichen = 250): string[] {
   return chunks.length > 0 ? chunks : [text]
 }
 
+const TEMPOS = [
+  { wert: 0.8, label: "0.8×" },
+  { wert: 1.0, label: "1×" },
+  { wert: 1.2, label: "1.2×" },
+]
+
 export default function VorleseButton({ text }: { text: string }) {
   const { t } = useSprache()
 
   const [geschlecht, setGeschlecht] = useState<"weiblich" | "männlich">("weiblich")
   const [laden, setLaden] = useState(false)
   const [spielt, setSpielt] = useState(false)
+  const [pausiert, setPausiert] = useState(false)
+  const [tempo, setTempo] = useState(1.0)
   const [fehler, setFehler] = useState("")
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const abbrechenRef = useRef<AbortController | null>(null)
+  const tempoRef = useRef(tempo)
+  tempoRef.current = tempo
 
   async function holAudio(chunk: string, signal: AbortSignal): Promise<string> {
-    const response = await fetch("/api/vorlesen", {
+    const response = await authFetch("/api/vorlesen", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text: chunk, geschlecht }),
@@ -50,6 +61,7 @@ export default function VorleseButton({ text }: { text: string }) {
   async function vorlesen() {
     setFehler("")
     setLaden(true)
+    setPausiert(false)
 
     const controller = new AbortController()
     abbrechenRef.current = controller
@@ -71,13 +83,13 @@ export default function VorleseButton({ text }: { text: string }) {
       async function spieleIndex(idx: number) {
         if (signal.aborted) return
 
-        // URL des aktuellen Chunks (erster ist bereits bekannt, Rest aus Promise)
         const url = idx === 0 ? ersteUrl : await audioPromises[idx]
         if (signal.aborted) return
 
         if (audioRef.current) audioRef.current.pause()
 
         const audio = new Audio(url) as AudioMitSink
+        audio.playbackRate = tempoRef.current
         audioRef.current = audio
 
         audio.onended = () => {
@@ -85,6 +97,7 @@ export default function VorleseButton({ text }: { text: string }) {
             spieleIndex(idx + 1)
           } else {
             setSpielt(false)
+            setPausiert(false)
           }
         }
 
@@ -111,6 +124,23 @@ export default function VorleseButton({ text }: { text: string }) {
     }
   }
 
+  function pauseWechseln() {
+    const audio = audioRef.current
+    if (!audio) return
+    if (pausiert) {
+      audio.play().catch(() => {})
+      setPausiert(false)
+    } else {
+      audio.pause()
+      setPausiert(true)
+    }
+  }
+
+  function tempoSetzen(wert: number) {
+    setTempo(wert)
+    if (audioRef.current) audioRef.current.playbackRate = wert
+  }
+
   function stoppen() {
     abbrechenRef.current?.abort()
     abbrechenRef.current = null
@@ -119,6 +149,7 @@ export default function VorleseButton({ text }: { text: string }) {
       audioRef.current.currentTime = 0
     }
     setSpielt(false)
+    setPausiert(false)
     setLaden(false)
   }
 
@@ -129,7 +160,7 @@ export default function VorleseButton({ text }: { text: string }) {
       </p>
 
       {/* Stimm-Auswahl */}
-      <div className="flex gap-3 mb-4">
+      <div className="flex gap-3 mb-3">
         <button
           onClick={() => setGeschlecht("weiblich")}
           disabled={laden || spielt}
@@ -154,6 +185,24 @@ export default function VorleseButton({ text }: { text: string }) {
         </button>
       </div>
 
+      {/* Tempo */}
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-indigo-300 text-xs">{t("vorlese.tempo")}</span>
+        {TEMPOS.map((tp) => (
+          <button
+            key={tp.wert}
+            onClick={() => tempoSetzen(tp.wert)}
+            className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
+              tempo === tp.wert
+                ? "bg-yellow-400 text-indigo-950"
+                : "bg-indigo-700 text-white hover:bg-indigo-600"
+            }`}
+          >
+            {tp.label}
+          </button>
+        ))}
+      </div>
+
       {/* Abspiel-Steuerung */}
       {laden ? (
         <button
@@ -170,12 +219,20 @@ export default function VorleseButton({ text }: { text: string }) {
           {t("vorlese.vorlesen")}
         </button>
       ) : (
-        <button
-          onClick={stoppen}
-          className="w-full bg-red-500 hover:bg-red-400 text-white font-bold py-3 rounded-lg transition"
-        >
-          {t("vorlese.stoppen")}
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={pauseWechseln}
+            className="flex-1 bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-3 rounded-lg transition"
+          >
+            {pausiert ? t("vorlese.weiter") : t("vorlese.pause")}
+          </button>
+          <button
+            onClick={stoppen}
+            className="flex-1 bg-red-500 hover:bg-red-400 text-white font-bold py-3 rounded-lg transition"
+          >
+            {t("vorlese.stoppen")}
+          </button>
+        </div>
       )}
 
       {fehler && (

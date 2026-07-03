@@ -40,6 +40,7 @@ export default function BibliothekPage() {
       stil: g.stil,
       dauer: g.dauer,
       geschichte: g.geschichte,
+      titel: g.titel ?? "",
       id: g.id,
     })
     return `/geschichte?${params.toString()}`
@@ -49,7 +50,7 @@ export default function BibliothekPage() {
   const istVoll = anzahl >= MAX_GESCHICHTEN
 
   return (
-    <SchutzRoute abo>
+    <SchutzRoute>
     <div>
       <div className="flex items-center justify-between mb-2">
         <h1 className="text-3xl font-bold text-white">{t("bib.titel")}</h1>
@@ -120,8 +121,13 @@ export default function BibliothekPage() {
 
             <div className="p-5 flex flex-col flex-1">
               <h3 className="text-white font-bold text-lg mb-1">
-                🌙 {g.name}
+                🌙 {g.titel || g.name}
               </h3>
+              {g.titel && (
+                <p className="text-indigo-300 text-xs mb-1">
+                  {t("reader.fuer")} {g.name}
+                </p>
+              )}
               <p className="text-indigo-400 text-xs mb-2">
                 {new Date(g.datum).toLocaleDateString(sprache === "de" ? "de-DE" : "en-GB")} · {g.alter} {t("gemein.jahre")} · ~{g.dauer} {t("gemein.min")}
               </p>

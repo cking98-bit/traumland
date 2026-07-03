@@ -2,36 +2,66 @@ import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/firebaseAdmin"
 import { FieldValue } from "firebase-admin/firestore"
 import { holeKontingent } from "@/lib/kontingent"
+import { verifiziereNutzer } from "@/lib/serverAuth"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
 
-// Kontingent: so viele Geschichten wie Tage im Abrechnungszeitraum,
-// frei einteilbar (auch mehrere pro Tag)
 export async function POST(request: NextRequest) {
   try {
+    const uid = await verifiziereNutzer(request)
+    if (!uid) {
+      return NextResponse.json({ fehler: "Nicht angemeldet" }, { status: 401 })
+    }
+
+    const body = await request.json()
     const {
       name,
       alter,
       stichwörter,
       stile,
-      dauer,
       sprache,
-      uid,
       profilId,
       vorherigeGeschichte,
-    } = await request.json()
+      themen,
+    } = body
+    let dauer: string = body.dauer ?? "5"
 
-    // Kontingent prüfen
-    if (uid && profilId) {
-      const kontingent = await holeKontingent(uid, profilId)
-      if (kontingent.verbleibend <= 0) {
-        return NextResponse.json({ fehler: "limit" }, { status: 429 })
+    // Abo-Status prüfen
+    const userSnap = await adminDb.collection("users").doc(uid).get()
+    const userDaten = userSnap.data() ?? {}
+    const abo = userDaten.abo
+    const hatAbo = !!abo && abo.status !== "gekuendigt"
+    let istGratisGeschichte = false
+
+    if (hatAbo) {
+      // Kontingent: so viele Geschichten wie Tage im Abrechnungszeitraum
+      if (profilId) {
+        const kontingent = await holeKontingent(uid, profilId)
+        if (kontingent.verbleibend <= 0) {
+          return NextResponse.json({ fehler: "limit" }, { status: 429 })
+        }
       }
+    } else {
+      // Kein Abo: 1 kostenlose 2-Minuten-Geschichte
+      if (userDaten.gratis_geschichte_genutzt) {
+        return NextResponse.json({ fehler: "gratis_verbraucht" }, { status: 403 })
+      }
+      istGratisGeschichte = true
+      dauer = "2"
     }
 
     // Vorlesen: ca. 130 Wörter pro Minute
     const wörter = Number(dauer) * 130
+
+    const themenBlockDe =
+      themen && themen.length > 0
+        ? `\n- Die Geschichte soll behutsam und kindgerecht folgendes Thema vermitteln: ${themen}`
+        : ""
+    const themenBlockEn =
+      themen && themen.length > 0
+        ? `\n- The story should gently convey the following theme in a child-friendly way: ${themen}`
+        : ""
 
     const fortsetzungBlockDe = vorherigeGeschichte
       ? `
@@ -60,23 +90,25 @@ Write a bedtime story in English with the following requirements:
 
 - Main character: ${name} (${alter} years old)
 - Topics and interests: ${stichwörter}
-- Style: ${stile}
+- Style: ${stile}${themenBlockEn}
 - Length: about ${wörter} words (reading time approx. ${dauer} minutes)
 - Tone: simple, warm and soothing
 - Ending: calm and sleep-inducing${fortsetzungBlockEn}
 
-Write ONLY the story, without a title or introduction.`
+Start your answer with a single line "TITLE: <a short, magical story title>".
+After that, write ONLY the story, without any further introduction.`
         : `Du bist ein einfühlsamer Geschichtenerzähler für Kinder.
 Schreibe eine Gute-Nacht-Geschichte auf Deutsch mit folgenden Vorgaben:
 
 - Hauptfigur: ${name} (${alter} Jahre alt)
 - Themen und Interessen: ${stichwörter}
-- Stil: ${stile}
+- Stil: ${stile}${themenBlockDe}
 - Länge: ungefähr ${wörter} Wörter (Vorlesedauer ca. ${dauer} Minuten)
 - Sprache: einfach, warm und beruhigend
 - Ende: ruhig und einschläfernd${fortsetzungBlockDe}
 
-Schreibe NUR die Geschichte, ohne Titel oder Einleitung.`
+Beginne deine Antwort mit einer einzigen Zeile "TITEL: <ein kurzer, magischer Titel für die Geschichte>".
+Danach schreibe NUR die Geschichte, ohne weitere Einleitung.`
 
     const response = await fetch(
       "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
@@ -99,9 +131,9 @@ Schreibe NUR die Geschichte, ohne Titel oder Einleitung.`
 
     const data = await response.json()
 
-    const geschichte = data.candidates?.[0]?.content?.parts?.[0]?.text
+    const rohtext: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text
 
-    if (!geschichte) {
+    if (!rohtext) {
       console.error("Keine Geschichte. Antwort:", JSON.stringify(data).slice(0, 300))
       return NextResponse.json(
         { fehler: "Keine Geschichte generiert" },
@@ -109,14 +141,29 @@ Schreibe NUR die Geschichte, ohne Titel oder Einleitung.`
       )
     }
 
-    // Zähler des heutigen Tages erhöhen (mehrere pro Tag möglich)
-    if (uid && profilId) {
+    // Titel aus der ersten Zeile ziehen
+    let titel = ""
+    let geschichte = rohtext.trim()
+    const titelMatch = geschichte.match(/^TIT(?:EL|LE):\s*(.+)$/im)
+    if (titelMatch) {
+      titel = titelMatch[1].trim().replace(/^["*_]+|["*_]+$/g, "")
+      geschichte = geschichte.replace(/^TIT(?:EL|LE):.*$/im, "").trim()
+    }
+
+    // Zähler bzw. Gratis-Flag setzen
+    if (hatAbo && profilId) {
       const heute = new Date().toISOString().slice(0, 10)
       const zaehlerRef = adminDb.collection("users").doc(uid).collection("zaehler").doc(heute)
       await zaehlerRef.set({ [profilId]: FieldValue.increment(1) }, { merge: true })
     }
+    if (istGratisGeschichte) {
+      await adminDb.collection("users").doc(uid).set(
+        { gratis_geschichte_genutzt: true },
+        { merge: true }
+      )
+    }
 
-    return NextResponse.json({ geschichte })
+    return NextResponse.json({ geschichte, titel })
   } catch (error) {
     console.error("Fehler:", error)
     return NextResponse.json(

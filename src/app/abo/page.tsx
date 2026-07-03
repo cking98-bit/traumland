@@ -6,6 +6,7 @@ import SchutzRoute from "@/components/SchutzRoute"
 import { useSprache } from "@/components/LanguageProvider"
 import { useAuth } from "@/components/AuthProvider"
 import { PLAN_INFO, berechnePreis } from "@/lib/plaene"
+import { authFetch } from "@/lib/apiClient"
 
 type AboDetails = {
   abo: {
@@ -48,7 +49,7 @@ export default function AboPage() {
     const controller = new AbortController()
     const timeout = setTimeout(() => controller.abort(), 12000)
 
-    fetch(`/api/abo/details?uid=${nutzer.uid}`, { signal: controller.signal })
+    authFetch(`/api/abo/details`, { signal: controller.signal })
       .then((r) => r.json())
       .then((data) => {
         clearTimeout(timeout)
@@ -78,17 +79,13 @@ export default function AboPage() {
     setKuendigtLaedt(true)
     setKuendigenFehler("")
     try {
-      const res = await fetch("/api/abo/kuendigen", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: nutzer.uid }),
-      })
+      const res = await authFetch("/api/abo/kuendigen", { method: "POST" })
       const data = await res.json()
       if (!data.ok) throw new Error()
       setErfolg(t("abo.gekuendigt"))
       setZeigBestaetigung(false)
       await aboNeuLaden()
-      const r2 = await fetch(`/api/abo/details?uid=${nutzer.uid}`)
+      const r2 = await authFetch(`/api/abo/details`)
       const d2 = await r2.json()
       if (!d2.fehler) setDetails(d2)
     } catch {
@@ -104,16 +101,12 @@ export default function AboPage() {
     setErfolg("")
     setFehler("")
     try {
-      const res = await fetch("/api/abo/wechsel-widerrufen", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: nutzer.uid }),
-      })
+      const res = await authFetch("/api/abo/wechsel-widerrufen", { method: "POST" })
       const data = await res.json()
       if (!data.ok) throw new Error()
       setErfolg(t("wechsel.widerrufenErfolg"))
       await aboNeuLaden()
-      const r2 = await fetch(`/api/abo/details?uid=${nutzer.uid}`)
+      const r2 = await authFetch(`/api/abo/details`)
       const d2 = await r2.json()
       if (!d2.fehler) setDetails(d2)
     } catch {

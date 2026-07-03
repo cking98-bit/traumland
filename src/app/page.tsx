@@ -4,27 +4,126 @@ import Link from "next/link"
 import Features from "@/components/Features"
 import { useSprache } from "@/components/LanguageProvider"
 
+const FAQ_IDS = ["daten", "kuendigen", "kindgerecht", "personalisierung", "geraete", "gratis"]
+
 export default function Home() {
   const { t } = useSprache()
 
   return (
-    <div className="text-center py-12">
+    <div className="py-12">
       {/* Hero */}
-      <div className="text-6xl md:text-8xl mb-6">🌙</div>
-      <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">{t("marke")}</h1>
-      <p className="text-indigo-300 text-base md:text-xl mb-10 max-w-lg mx-auto">
-        {t("home.untertitel")}
-      </p>
+      <div className="text-center">
+        <div className="text-6xl md:text-8xl mb-6">🌙</div>
+        <h1 className="text-3xl md:text-5xl font-bold text-white mb-4">{t("marke")}</h1>
+        <p className="text-indigo-300 text-base md:text-xl mb-8 max-w-lg mx-auto">
+          {t("home.untertitel")}
+        </p>
 
-      <Link
-        href="/generator"
-        className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-10 py-4 rounded-full text-lg transition inline-block"
-      >
-        {t("home.cta")}
-      </Link>
+        <Link
+          href="/generator"
+          className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-10 py-4 rounded-full text-lg transition inline-block"
+        >
+          {t("home.ctaGratis")}
+        </Link>
+        <p className="text-indigo-400 text-xs mt-3">{t("home.ctaHinweis")}</p>
+      </div>
+
+      {/* Beispiel-Geschichte */}
+      <div className="mt-16 bg-indigo-900 rounded-3xl overflow-hidden md:flex">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/demo-bild.png"
+          alt={t("home.beispielAlt")}
+          className="w-full md:w-2/5 h-56 md:h-auto object-cover"
+        />
+        <div className="p-6 md:p-8 flex-1 text-left">
+          <p className="text-yellow-400 text-xs font-bold uppercase tracking-wide mb-2">
+            {t("home.beispielLabel")}
+          </p>
+          <h2 className="text-white font-bold text-xl mb-3">
+            {t("home.beispielTitel")}
+          </h2>
+          <p className="text-indigo-200 text-sm leading-relaxed mb-4">
+            {t("home.beispielText")}
+          </p>
+
+          {/* Hörprobe */}
+          <p className="text-indigo-300 text-xs mb-2">🔊 {t("home.hoerprobe")}</p>
+          <audio controls preload="none" className="w-full h-10">
+            <source src="/demo-audio.wav" type="audio/wav" />
+          </audio>
+        </div>
+      </div>
+
+      {/* So funktioniert's */}
+      <div className="mt-16">
+        <h2 className="text-white font-bold text-2xl text-center mb-8">
+          {t("home.schritteTitel")}
+        </h2>
+        <div className="grid md:grid-cols-3 gap-5">
+          {[
+            { emoji: "👧", nr: "1", key: "schritt1" },
+            { emoji: "✨", nr: "2", key: "schritt2" },
+            { emoji: "🌙", nr: "3", key: "schritt3" },
+          ].map((s) => (
+            <div key={s.nr} className="bg-indigo-900 rounded-2xl p-6 text-center">
+              <div className="text-4xl mb-3">{s.emoji}</div>
+              <p className="text-yellow-400 font-bold text-sm mb-1">
+                {t("home.schritt")} {s.nr}
+              </p>
+              <h3 className="text-white font-bold mb-2">{t(`home.${s.key}.titel`)}</h3>
+              <p className="text-indigo-300 text-sm">{t(`home.${s.key}.text`)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Features – informativ, mit Info-Icons */}
-      <Features />
+      <div className="text-center">
+        <Features />
+      </div>
+
+      {/* Vertrauen */}
+      <div className="mt-16 bg-indigo-900/60 border border-indigo-800 rounded-2xl px-6 py-5 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-8 text-indigo-200 text-sm text-center">
+        <span>🔒 {t("home.vertrauen1")}</span>
+        <span>🚫 {t("home.vertrauen2")}</span>
+        <span>✅ {t("home.vertrauen3")}</span>
+      </div>
+
+      {/* FAQ */}
+      <div className="mt-16 max-w-2xl mx-auto">
+        <h2 className="text-white font-bold text-2xl text-center mb-8">
+          {t("home.faqTitel")}
+        </h2>
+        <div className="flex flex-col gap-3">
+          {FAQ_IDS.map((id) => (
+            <details
+              key={id}
+              className="bg-indigo-900 rounded-xl px-5 py-4 group"
+            >
+              <summary className="text-white font-medium text-sm cursor-pointer list-none flex justify-between items-center">
+                {t(`faq.${id}.frage`)}
+                <span className="text-indigo-400 group-open:rotate-180 transition-transform">
+                  ⌄
+                </span>
+              </summary>
+              <p className="text-indigo-300 text-sm mt-3 leading-relaxed">
+                {t(`faq.${id}.antwort`)}
+              </p>
+            </details>
+          ))}
+        </div>
+      </div>
+
+      {/* Abschluss-CTA */}
+      <div className="mt-16 text-center">
+        <Link
+          href="/preise"
+          className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-10 py-4 rounded-full text-lg transition inline-block"
+        >
+          {t("home.ctaPreise")}
+        </Link>
+      </div>
     </div>
   )
 }

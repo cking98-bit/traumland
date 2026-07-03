@@ -272,6 +272,84 @@ export const texte: Record<Sprache, Dict> = {
     // Footer
     "footer.impressum": "Impressum",
     "footer.datenschutz": "Datenschutz",
+    "footer.agb": "AGB",
+    "footer.widerruf": "Widerruf",
+    "footer.kuendigen": "Verträge hier kündigen",
+
+    // Startseite (erweitert)
+    "home.ctaGratis": "Erste Geschichte gratis erstellen ✨",
+    "home.ctaHinweis": "Ohne Zahlungsdaten – einfach registrieren und ausprobieren",
+    "home.ctaPreise": "Pläne ansehen 💎",
+    "home.beispielLabel": "Beispiel-Geschichte",
+    "home.beispielTitel": "Lina und der Sternendrache",
+    "home.beispielText": "Es war einmal ein kleines Mädchen namens Lina, das jeden Abend aus ihrem Fenster die Sterne zählte. Doch heute Nacht war etwas anders: Einer der Sterne funkelte nicht nur – er flatterte. Und als Lina genauer hinsah, erkannte sie einen kleinen Drachen mit Flügeln aus Sternenlicht. ›Steig auf‹, flüsterte er, ›ich zeige dir, wo die Träume wohnen.‹ …",
+    "home.beispielAlt": "Beispiel-Illustration: Ein Mädchen fliegt auf einem Sternendrachen durch den Nachthimmel",
+    "home.hoerprobe": "So klingt die Vorlesestimme:",
+    "home.schritteTitel": "So funktioniert's",
+    "home.schritt": "Schritt",
+    "home.schritt1.titel": "Kind anlegen",
+    "home.schritt1.text": "Name und Alter deines Kindes eingeben – daraus wird die Hauptfigur jeder Geschichte.",
+    "home.schritt2.titel": "Wünsche auswählen",
+    "home.schritt2.text": "Lieblingsthemen, Stil und Länge wählen – auf Wunsch mit pädagogischem Thema wie Mut oder Einschlafen.",
+    "home.schritt3.titel": "Vorlesen & Träumen",
+    "home.schritt3.text": "In Sekunden entsteht eine einzigartige Geschichte mit Bild – zum Selbstvorlesen oder mit KI-Stimme.",
+    "home.vertrauen1": "Die Daten deines Kindes bleiben privat",
+    "home.vertrauen2": "Keine Werbung",
+    "home.vertrauen3": "Jederzeit kündbar",
+    "home.faqTitel": "Häufige Fragen",
+
+    // FAQ
+    "faq.daten.frage": "Was passiert mit den Daten meines Kindes?",
+    "faq.daten.antwort": "Wir speichern nur den Vornamen und das Geburtsdatum – ausschließlich, um die Geschichten zu personalisieren. Die Daten werden niemals für Werbung genutzt oder an Dritte verkauft. Details findest du in unserer Datenschutzerklärung.",
+    "faq.kuendigen.frage": "Kann ich jederzeit kündigen?",
+    "faq.kuendigen.antwort": "Ja. Monatstarife kannst du jederzeit zum Ende des Abrechnungsmonats kündigen – direkt in deiner Abo-Verwaltung mit zwei Klicks. Der Jahrestarif ist zum Ende der Laufzeit kündbar.",
+    "faq.kindgerecht.frage": "Sind die Geschichten wirklich kindgerecht?",
+    "faq.kindgerecht.antwort": "Ja. Jede Geschichte wird speziell als beruhigende Gute-Nacht-Geschichte erstellt: einfache Sprache, warmer Ton, sanftes Ende. Alter und Interessen deines Kindes fließen direkt ein.",
+    "faq.personalisierung.frage": "Wie persönlich sind die Geschichten?",
+    "faq.personalisierung.antwort": "Dein Kind ist die Hauptfigur – mit Namen und passend zum Alter. Du bestimmst Themen, Stil und Länge. Geschichten können sogar aufeinander aufbauen, wie eine eigene kleine Serie.",
+    "faq.geraete.frage": "Auf welchen Geräten funktioniert Dreamland?",
+    "faq.geraete.antwort": "Auf allen: Handy, Tablet und Computer. Deine Kinderprofile und die Bibliothek sind an dein Konto gekoppelt und auf jedem Gerät verfügbar.",
+    "faq.gratis.frage": "Kann ich Dreamland kostenlos testen?",
+    "faq.gratis.antwort": "Ja! Nach der Registrierung erstellst du eine kostenlose 2-Minuten-Geschichte – ganz ohne Zahlungsdaten. So kannst du Qualität, Bild und Vorlesestimme in Ruhe ausprobieren.",
+
+    // Gratis-Geschichte
+    "gen.alter": "Alter",
+    "gen.fehler.alter": "Bitte wähle das Alter aus.",
+    "gen.gratisBanner": "✨ Deine Gratis-Geschichte",
+    "gen.gratisBannerText": "Erstelle eine kostenlose 2-Minuten-Geschichte – ganz ohne Zahlung.",
+    "gen.gratisVerbraucht": "Deine Gratis-Geschichte wurde bereits erstellt.",
+    "gen.gratisVerbrauchtTitel": "Deine Gratis-Geschichte ist verbraucht",
+    "gen.gratisVerbrauchtText": "Hat sie deinem Kind gefallen? Mit einem Abo gibt es jeden Tag eine neue Geschichte – personalisiert, illustriert und vorgelesen.",
+    "gen.gratisVerbrauchtCta": "Pläne ansehen 💎",
+    "gen.btnGratis": "Gratis-Geschichte erstellen ✨",
+    "gen.dauerGratisHint": "(Gratis-Geschichte: 2 Minuten)",
+
+    // Pädagogische Themen
+    "gen.thema": "Pädagogisches Thema",
+    "gen.themaHint": "(optional – z. B. für kleine Alltagshelden)",
+    "thema.mut": "Mut machen 💪",
+    "thema.einschlafen": "Einschlafen 😴",
+    "thema.zaehneputzen": "Zähneputzen 🪥",
+    "thema.teilen": "Teilen lernen 🤝",
+    "thema.kita": "Kita & Schule 🎒",
+    "thema.freundschaft": "Freundschaft 🧸",
+    "thema.dunkelheit": "Keine Angst im Dunkeln 🔦",
+
+    // Vorlesen (erweitert)
+    "vorlese.tempo": "Tempo:",
+    "vorlese.pause": "⏸ Pause",
+    "vorlese.weiter": "▶ Weiter",
+
+    // Profil (erweitert)
+    "profil.kindFehler": "Das Kind konnte nicht hinzugefügt werden. Bitte versuche es erneut.",
+    "profil.willkommenTitel": "🎉 Willkommen bei Dreamland!",
+    "profil.willkommenText": "Dein Abo ist aktiv. Lege jetzt das Profil deines Kindes an und erstelle die erste Geschichte.",
+
+    // Preise (rechtlich)
+    "preise.agbHinweis1": "Mit dem Kauf akzeptierst du unsere",
+    "preise.agbHinweis2": "und die",
+    "preise.agbLink": "AGB",
+    "preise.widerrufLink": "Widerrufsbelehrung",
   },
 
   en: {
@@ -531,5 +609,83 @@ export const texte: Record<Sprache, Dict> = {
     // Footer
     "footer.impressum": "Imprint",
     "footer.datenschutz": "Privacy",
+    "footer.agb": "Terms",
+    "footer.widerruf": "Withdrawal",
+    "footer.kuendigen": "Cancel contracts here",
+
+    // Home (extended)
+    "home.ctaGratis": "Create your first story for free ✨",
+    "home.ctaHinweis": "No payment details – just sign up and try it",
+    "home.ctaPreise": "View plans 💎",
+    "home.beispielLabel": "Sample story",
+    "home.beispielTitel": "Lina and the Star Dragon",
+    "home.beispielText": "Once upon a time there was a little girl named Lina who counted the stars from her window every night. But tonight something was different: one of the stars didn't just sparkle – it fluttered. And when Lina looked closer, she saw a little dragon with wings made of starlight. ›Climb on‹, he whispered, ›I'll show you where the dreams live.‹ …",
+    "home.beispielAlt": "Sample illustration: a girl flying on a star dragon through the night sky",
+    "home.hoerprobe": "This is what the reading voice sounds like:",
+    "home.schritteTitel": "How it works",
+    "home.schritt": "Step",
+    "home.schritt1.titel": "Add your child",
+    "home.schritt1.text": "Enter your child's name and age – they become the hero of every story.",
+    "home.schritt2.titel": "Choose the details",
+    "home.schritt2.text": "Pick favourite topics, style and length – optionally with an educational theme like courage or falling asleep.",
+    "home.schritt3.titel": "Read & dream",
+    "home.schritt3.text": "A unique story with an illustration is created in seconds – read it yourself or let the AI voice do it.",
+    "home.vertrauen1": "Your child's data stays private",
+    "home.vertrauen2": "No ads",
+    "home.vertrauen3": "Cancel any time",
+    "home.faqTitel": "Frequently asked questions",
+
+    // FAQ
+    "faq.daten.frage": "What happens to my child's data?",
+    "faq.daten.antwort": "We only store the first name and date of birth – exclusively to personalize the stories. The data is never used for advertising or sold to third parties. See our privacy policy for details.",
+    "faq.kuendigen.frage": "Can I cancel any time?",
+    "faq.kuendigen.antwort": "Yes. Monthly plans can be cancelled any time effective at the end of the billing month – with two clicks in your subscription settings. The yearly plan can be cancelled at the end of its term.",
+    "faq.kindgerecht.frage": "Are the stories really child-friendly?",
+    "faq.kindgerecht.antwort": "Yes. Every story is created specifically as a soothing bedtime story: simple language, warm tone, gentle ending. Your child's age and interests are taken into account.",
+    "faq.personalisierung.frage": "How personal are the stories?",
+    "faq.personalisierung.antwort": "Your child is the main character – by name and matched to their age. You choose topics, style and length. Stories can even build on each other, like your own little series.",
+    "faq.geraete.frage": "Which devices does Dreamland work on?",
+    "faq.geraete.antwort": "All of them: phone, tablet and computer. Your child profiles and library are tied to your account and available on every device.",
+    "faq.gratis.frage": "Can I try Dreamland for free?",
+    "faq.gratis.antwort": "Yes! After signing up you create a free 2-minute story – no payment details needed. Try the quality, illustration and reading voice at your own pace.",
+
+    // Free story
+    "gen.alter": "Age",
+    "gen.fehler.alter": "Please choose an age.",
+    "gen.gratisBanner": "✨ Your free story",
+    "gen.gratisBannerText": "Create a free 2-minute story – no payment needed.",
+    "gen.gratisVerbraucht": "Your free story has already been created.",
+    "gen.gratisVerbrauchtTitel": "Your free story has been used",
+    "gen.gratisVerbrauchtText": "Did your child like it? With a subscription there's a new story every day – personalized, illustrated and read aloud.",
+    "gen.gratisVerbrauchtCta": "View plans 💎",
+    "gen.btnGratis": "Create free story ✨",
+    "gen.dauerGratisHint": "(free story: 2 minutes)",
+
+    // Educational themes
+    "gen.thema": "Educational theme",
+    "gen.themaHint": "(optional – for little everyday heroes)",
+    "thema.mut": "Courage 💪",
+    "thema.einschlafen": "Falling asleep 😴",
+    "thema.zaehneputzen": "Brushing teeth 🪥",
+    "thema.teilen": "Learning to share 🤝",
+    "thema.kita": "Kindergarten & school 🎒",
+    "thema.freundschaft": "Friendship 🧸",
+    "thema.dunkelheit": "No fear of the dark 🔦",
+
+    // Read-aloud (extended)
+    "vorlese.tempo": "Speed:",
+    "vorlese.pause": "⏸ Pause",
+    "vorlese.weiter": "▶ Resume",
+
+    // Profile (extended)
+    "profil.kindFehler": "The child could not be added. Please try again.",
+    "profil.willkommenTitel": "🎉 Welcome to Dreamland!",
+    "profil.willkommenText": "Your subscription is active. Create your child's profile now and generate the first story.",
+
+    // Pricing (legal)
+    "preise.agbHinweis1": "By purchasing you accept our",
+    "preise.agbHinweis2": "and the",
+    "preise.agbLink": "Terms",
+    "preise.widerrufLink": "withdrawal policy",
   },
 }

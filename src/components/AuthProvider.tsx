@@ -9,13 +9,14 @@ import {
 } from "react"
 import { onAuthStateChanged, User } from "firebase/auth"
 import { auth } from "@/lib/firebase"
-import { ladeAbo, type Abo } from "@/lib/abo"
+import { ladeNutzerDaten, type Abo } from "@/lib/abo"
 
 type AuthContextType = {
   nutzer: User | null
   laden: boolean
   abo: Abo | null
   aboLaden: boolean
+  gratisGenutzt: boolean
   aboNeuLaden: () => Promise<void>
 }
 
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   laden: true,
   abo: null,
   aboLaden: true,
+  gratisGenutzt: false,
   aboNeuLaden: async () => {},
 })
 
@@ -40,17 +42,20 @@ export default function AuthProvider({
   const [laden, setLaden] = useState(true)
   const [abo, setAbo] = useState<Abo | null>(null)
   const [aboLaden, setAboLaden] = useState(true)
+  const [gratisGenutzt, setGratisGenutzt] = useState(false)
 
-  // Abo aus Firestore (neu) laden – z.B. nach Abschluss eines Plans
+  // Abo + Gratis-Status aus Firestore (neu) laden
   const aboNeuLaden = useCallback(async () => {
     if (!auth?.currentUser) {
       setAbo(null)
+      setGratisGenutzt(false)
       setAboLaden(false)
       return
     }
     setAboLaden(true)
-    const a = await ladeAbo(auth.currentUser.uid)
-    setAbo(a)
+    const daten = await ladeNutzerDaten(auth.currentUser.uid)
+    setAbo(daten.abo)
+    setGratisGenutzt(daten.gratisGenutzt)
     setAboLaden(false)
   }, [])
 
@@ -68,14 +73,15 @@ export default function AuthProvider({
         const token = await user.getIdToken()
         document.cookie = `__session=${token}; path=/; max-age=3600; SameSite=Strict`
 
-        // Abo des Nutzers aus Firestore laden
         setAboLaden(true)
-        const a = await ladeAbo(user.uid)
-        setAbo(a)
+        const daten = await ladeNutzerDaten(user.uid)
+        setAbo(daten.abo)
+        setGratisGenutzt(daten.gratisGenutzt)
         setAboLaden(false)
       } else {
         document.cookie = "__session=; path=/; max-age=0"
         setAbo(null)
+        setGratisGenutzt(false)
         setAboLaden(false)
       }
     })
@@ -84,7 +90,7 @@ export default function AuthProvider({
 
   return (
     <AuthContext.Provider
-      value={{ nutzer, laden, abo, aboLaden, aboNeuLaden }}
+      value={{ nutzer, laden, abo, aboLaden, gratisGenutzt, aboNeuLaden }}
     >
       {children}
     </AuthContext.Provider>

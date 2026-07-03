@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { STRIPE_PLAENE, planBetragCents, type StripePlanId } from "@/lib/stripePlaene"
+import { verifiziereNutzer } from "@/lib/serverAuth"
 
 export const runtime = "nodejs"
 
@@ -8,7 +9,10 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 export async function POST(req: NextRequest) {
   try {
-    const { uid, plan, kinder, email } = await req.json()
+    const uid = await verifiziereNutzer(req)
+    if (!uid) return NextResponse.json({ error: "Nicht angemeldet" }, { status: 401 })
+
+    const { plan, kinder, email } = await req.json()
 
     const planInfo = STRIPE_PLAENE[plan as StripePlanId]
     if (!planInfo) {

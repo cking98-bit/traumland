@@ -3,6 +3,7 @@ import Stripe from "stripe"
 import { adminDb } from "@/lib/firebaseAdmin"
 import { FieldValue } from "firebase-admin/firestore"
 import { STRIPE_PLAENE, planBetragCents, type StripePlanId } from "@/lib/stripePlaene"
+import { verifiziereNutzer } from "@/lib/serverAuth"
 
 export const runtime = "nodejs"
 
@@ -13,8 +14,8 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 // die Laufzeit läuft normal weiter.
 export async function POST(req: NextRequest) {
   try {
-    const { uid } = await req.json()
-    if (!uid) return NextResponse.json({ fehler: "uid fehlt" }, { status: 400 })
+    const uid = await verifiziereNutzer(req)
+    if (!uid) return NextResponse.json({ fehler: "Nicht angemeldet" }, { status: 401 })
 
     const ref = adminDb.collection("users").doc(uid)
     const snap = await ref.get()

@@ -1,3 +1,5 @@
+import { authFetch } from "@/lib/apiClient"
+
 export type Geschichte = {
   id: string
   name: string
@@ -6,12 +8,13 @@ export type Geschichte = {
   stil: string
   dauer: string
   geschichte: string
+  titel?: string
   bild?: string
   sprache?: string // Sprache der Geschichte: "de" | "en"
   datum: number
 }
 
-export const MAX_GESCHICHTEN = 5
+export const MAX_GESCHICHTEN = 10
 
 const SCHLUESSEL = "traumland_geschichten"
 
@@ -53,7 +56,7 @@ export function komprimiereBild(
 // damit die Bibliothek auf allen Geräten gleich ist
 export async function ladeGeschichten(uid: string): Promise<Geschichte[]> {
   try {
-    const res = await fetch(`/api/bibliothek?uid=${uid}`)
+    const res = await authFetch(`/api/bibliothek?uid=${uid}`)
     const data = await res.json()
     if (data.fehler) throw new Error(data.fehler)
     let liste: Geschichte[] = data.geschichten ?? []
@@ -65,14 +68,14 @@ export async function ladeGeschichten(uid: string): Promise<Geschichte[]> {
         for (const g of lokal.slice(0, MAX_GESCHICHTEN)) {
           const kopie = { ...g }
           if (kopie.bild) kopie.bild = await komprimiereBild(kopie.bild)
-          await fetch("/api/bibliothek", {
+          await authFetch("/api/bibliothek", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ uid, geschichte: kopie }),
           })
         }
         localStorage.removeItem(SCHLUESSEL)
-        const res2 = await fetch(`/api/bibliothek?uid=${uid}`)
+        const res2 = await authFetch(`/api/bibliothek?uid=${uid}`)
         const data2 = await res2.json()
         liste = data2.geschichten ?? []
       }
@@ -86,7 +89,7 @@ export async function ladeGeschichten(uid: string): Promise<Geschichte[]> {
 
 export async function zaehleGeschichten(uid: string): Promise<number> {
   try {
-    const res = await fetch(`/api/bibliothek?uid=${uid}&anzahl=1`)
+    const res = await authFetch(`/api/bibliothek?uid=${uid}&anzahl=1`)
     const data = await res.json()
     return data.anzahl ?? 0
   } catch {
@@ -107,7 +110,7 @@ export async function speichereGeschichte(
   g: Omit<Geschichte, "id" | "datum">
 ): Promise<string | null> {
   try {
-    const res = await fetch("/api/bibliothek", {
+    const res = await authFetch("/api/bibliothek", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ uid, geschichte: g }),
@@ -122,7 +125,7 @@ export async function speichereGeschichte(
 export async function speichereBild(uid: string, id: string, bild: string) {
   try {
     const klein = await komprimiereBild(bild)
-    await fetch("/api/bibliothek", {
+    await authFetch("/api/bibliothek", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ uid, id, bild: klein }),
@@ -134,7 +137,7 @@ export async function speichereBild(uid: string, id: string, bild: string) {
 
 export async function löscheGeschichte(uid: string, id: string) {
   try {
-    await fetch(`/api/bibliothek?uid=${uid}&id=${id}`, { method: "DELETE" })
+    await authFetch(`/api/bibliothek?uid=${uid}&id=${id}`, { method: "DELETE" })
   } catch {
     // ignorieren
   }

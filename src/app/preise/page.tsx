@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useSprache } from "@/components/LanguageProvider"
 import { useAuth } from "@/components/AuthProvider"
+import { authFetch } from "@/lib/apiClient"
 import type { Sprache } from "@/lib/i18n"
 
 type Plan = {
@@ -114,7 +115,7 @@ function PlanKarte({ plan }: { plan: Plan }) {
     setFehler("")
     setLaedt(true)
     try {
-      const res = await fetch(`/api/abo/details?uid=${nutzer.uid}`)
+      const res = await authFetch(`/api/abo/details`)
       const data = await res.json()
       setWechselDatum(data.nextBilling ?? null)
       setZeigWechsel(true)
@@ -130,10 +131,10 @@ function PlanKarte({ plan }: { plan: Plan }) {
     setLaedt(true)
     setFehler("")
     try {
-      const res = await fetch("/api/abo/wechseln", {
+      const res = await authFetch("/api/abo/wechseln", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ uid: nutzer.uid, plan: plan.id, kinder }),
+        body: JSON.stringify({ plan: plan.id, kinder }),
       })
       const data = await res.json()
       if (!data.ok) throw new Error()
@@ -153,11 +154,10 @@ function PlanKarte({ plan }: { plan: Plan }) {
     setLaedt(true)
     setFehler("")
     try {
-      const res = await fetch("/api/checkout", {
+      const res = await authFetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          uid: nutzer.uid,
           plan: plan.id,
           kinder,
           email: nutzer.email,
@@ -321,6 +321,17 @@ export default function PreisePage() {
 
       <p className="text-indigo-400 text-sm text-center mt-10">
         {t("preise.trust")}
+      </p>
+      <p className="text-indigo-500 text-xs text-center mt-2">
+        {t("preise.agbHinweis1")}{" "}
+        <a href="/agb" className="underline hover:text-indigo-300">
+          {t("preise.agbLink")}
+        </a>{" "}
+        {t("preise.agbHinweis2")}{" "}
+        <a href="/widerruf" className="underline hover:text-indigo-300">
+          {t("preise.widerrufLink")}
+        </a>
+        .
       </p>
     </div>
   )

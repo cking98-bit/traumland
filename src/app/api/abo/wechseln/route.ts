@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { adminDb } from "@/lib/firebaseAdmin"
 import { STRIPE_PLAENE, planBetragCents, type StripePlanId } from "@/lib/stripePlaene"
+import { verifiziereNutzer } from "@/lib/serverAuth"
 
 export const runtime = "nodejs"
 
@@ -9,8 +10,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 export async function POST(req: NextRequest) {
   try {
-    const { uid, plan, kinder } = await req.json()
-    if (!uid || !plan || !kinder) {
+    const uid = await verifiziereNutzer(req)
+    if (!uid) return NextResponse.json({ fehler: "Nicht angemeldet" }, { status: 401 })
+
+    const { plan, kinder } = await req.json()
+    if (!plan || !kinder) {
       return NextResponse.json({ fehler: "Angaben unvollständig" }, { status: 400 })
     }
 

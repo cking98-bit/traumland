@@ -30,6 +30,24 @@ export async function ladeAbo(uid: string): Promise<Abo | null> {
   }
 }
 
+// Abo + Gratis-Geschichte-Status in einem Rutsch laden
+export async function ladeNutzerDaten(
+  uid: string
+): Promise<{ abo: Abo | null; gratisGenutzt: boolean }> {
+  if (!db) return { abo: null, gratisGenutzt: false }
+  try {
+    const snap = await getDoc(doc(db, "users", uid))
+    const data = snap.data()
+    return {
+      abo: (data?.abo as Abo) ?? null,
+      gratisGenutzt: !!data?.gratis_geschichte_genutzt,
+    }
+  } catch (e) {
+    console.error("Nutzerdaten laden fehlgeschlagen:", e)
+    return { abo: null, gratisGenutzt: false }
+  }
+}
+
 export async function setzeAbo(uid: string, plan: string, kinder: number) {
   if (!db) return
   await setDoc(

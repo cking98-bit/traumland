@@ -1,24 +1,25 @@
 import { NextRequest, NextResponse } from "next/server"
 import { adminDb } from "@/lib/firebaseAdmin"
+import { verifiziereNutzer } from "@/lib/serverAuth"
 
 export const runtime = "nodejs"
 
-const MAX_GESCHICHTEN = 5
+const MAX_GESCHICHTEN = 10
 
 function sammlung(uid: string) {
   return adminDb.collection("users").doc(uid).collection("bibliothek")
 }
 
-// GET ?uid=...            → alle Geschichten (neueste zuerst)
-// GET ?uid=...&anzahl=1   → nur die Anzahl
+// GET             → alle Geschichten (neueste zuerst)
+// GET ?anzahl=1   → nur die Anzahl
 export async function GET(req: NextRequest) {
-  const uid = req.nextUrl.searchParams.get("uid")
-  if (!uid) return NextResponse.json({ fehler: "uid fehlt" }, { status: 400 })
+  const uid = await verifiziereNutzer(req)
+  if (!uid) return NextResponse.json({ fehler: "Nicht angemeldet" }, { status: 401 })
 
   try {
     if (req.nextUrl.searchParams.get("anzahl")) {
       const snap = await sammlung(uid).select().get()
-      return NextResponse.json({ anzahl: snap.size })
+      return NextResponse.json({ anzahl: snap.size, max: MAX_GESCHICHTEN })
     }
 
     const snap = await sammlung(uid).orderBy("datum", "desc").get()
@@ -30,11 +31,14 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST { uid, geschichte } → speichert (max. 5), gibt { id } zurück
+// POST { geschichte } → speichert (max. 10), gibt { id } zurück
 export async function POST(req: NextRequest) {
+  const uid = await verifiziereNutzer(req)
+  if (!uid) return NextResponse.json({ fehler: "Nicht angemeldet" }, { status: 401 })
+
   try {
-    const { uid, geschichte } = await req.json()
-    if (!uid || !geschichte?.geschichte) {
+    const { geschichte } = await req.json()
+    if (!geschichte?.geschichte) {
       return NextResponse.json({ fehler: "Angaben unvollständig" }, { status: 400 })
     }
 
@@ -54,11 +58,14 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PATCH { uid, id, bild } → Bild nachträglich speichern
+// PATCH { id, bild } → Bild nachträglich speichern
 export async function PATCH(req: NextRequest) {
+  const uid = await verifiziereNutzer(req)
+  if (!uid) return NextResponse.json({ fehler: "Nicht angemeldet" }, { status: 401 })
+
   try {
-    const { uid, id, bild } = await req.json()
-    if (!uid || !id || !bild) {
+    const { id, bild } = await req.json()
+    if (!id || !bild) {
       return NextResponse.json({ fehler: "Angaben unvollständig" }, { status: 400 })
     }
     await sammlung(uid).doc(id).set({ bild }, { merge: true })
@@ -69,13 +76,14 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
-// DELETE ?uid=...&id=... → Geschichte löschen
+// DELETE ?id=... → Geschichte löschen
 export async function DELETE(req: NextRequest) {
-  const uid = req.nextUrl.searchParams.get("uid")
+  const uid = await verifiziereNutzer(req)
+  if (!uid) return NextResponse.json({ fehler: "Nicht angemeldet" }, { status: 401 })
+
   const id = req.nextUrl.searchParams.get("id")
-  if (!uid || !id) {
-    return NextResponse.json({ fehler: "uid oder id fehlt" }, { status: 400 })
-  }
+  if (!id) return NextResponse.json({ fehler: "id fehlt" }, { status: 400 })
+
   try {
     await sammlung(uid).doc(id).delete()
     return NextResponse.json({ ok: true })

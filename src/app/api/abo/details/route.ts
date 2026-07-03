@@ -2,14 +2,15 @@ import { NextRequest, NextResponse } from "next/server"
 import Stripe from "stripe"
 import { adminDb } from "@/lib/firebaseAdmin"
 import { FieldValue } from "firebase-admin/firestore"
+import { verifiziereNutzer } from "@/lib/serverAuth"
 
 export const runtime = "nodejs"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
 export async function GET(req: NextRequest) {
-  const uid = req.nextUrl.searchParams.get("uid")
-  if (!uid) return NextResponse.json({ fehler: "uid fehlt" }, { status: 400 })
+  const uid = await verifiziereNutzer(req)
+  if (!uid) return NextResponse.json({ fehler: "Nicht angemeldet" }, { status: 401 })
 
   try {
     const ref = adminDb.collection("users").doc(uid)

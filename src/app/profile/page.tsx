@@ -12,8 +12,8 @@ import {
   berechneAlter,
   type Profil,
 } from "@/lib/profile"
-import { erhoeheKinder } from "@/lib/abo"
 import { PLAN_INFO } from "@/lib/plaene"
+import { authFetch } from "@/lib/apiClient"
 
 const pad = (n: string) => n.padStart(2, "0")
 
@@ -28,6 +28,7 @@ export default function ProfilePage() {
   const [monat, setMonat] = useState("")
   const [jahr, setJahr] = useState("")
   const [fehler, setFehler] = useState("")
+  const [checkoutErfolg, setCheckoutErfolg] = useState(false)
 
   // Formular für "weiteres Kind" (kostenpflichtig)
   const [zeigAddForm, setZeigAddForm] = useState(false)
@@ -48,6 +49,12 @@ export default function ProfilePage() {
     addTag && addMonat && addJahr
       ? `${addJahr}-${pad(addMonat)}-${pad(addTag)}`
       : ""
+
+  useEffect(() => {
+    // Willkommens-Banner nach erfolgreichem Checkout
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("checkout") === "success") setCheckoutErfolg(true)
+  }, [])
 
   useEffect(() => {
     if (!nutzer) return
@@ -105,7 +112,13 @@ export default function ProfilePage() {
     }
     setAddLaedt(true)
     try {
-      await erhoeheKinder(nutzer.uid)
+      // Stripe-Abbuchung anheben + Firestore-Kinderzahl erhöhen
+      const res = await authFetch("/api/abo/kind-hinzufuegen", { method: "POST" })
+      const data = await res.json()
+      if (!data.ok) {
+        setAddFehler(t("profil.kindFehler"))
+        return
+      }
       const { profile: neueListe } = await speichereProfil(nutzer.uid, {
         name: addName.trim(),
         geburtsdatum: addGeburtsdatum,
@@ -150,6 +163,13 @@ export default function ProfilePage() {
               {belegt} {t("profil.von")} {abo.kinder} {t("profil.plaetze")}
             </span>
           </div>
+          {checkoutErfolg && (
+            <div className="bg-green-500/20 border border-green-500 rounded-2xl px-5 py-4 mb-6">
+              <p className="text-green-300 font-bold">{t("profil.willkommenTitel")}</p>
+              <p className="text-green-200 text-sm mt-1">{t("profil.willkommenText")}</p>
+            </div>
+          )}
+
           <p className="text-indigo-300 mb-4">{t("profil.untertitel")}</p>
 
           {/* Abo-Verwaltung */}

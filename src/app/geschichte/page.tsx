@@ -14,6 +14,7 @@ type Params = {
   stil: string
   dauer: string
   geschichte: string
+  titel: string
   id: string
 }
 
@@ -30,17 +31,19 @@ export default function GeschichtePage() {
       stil: sp.get("stil") ?? "",
       dauer: sp.get("dauer") ?? "",
       geschichte: sp.get("geschichte") ?? "",
+      titel: sp.get("titel") ?? "",
       id: sp.get("id") ?? "",
     })
   }, [])
 
   return (
-    <SchutzRoute abo>
+    <SchutzRoute>
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-white mb-1">
-          {t("reader.fuer")} {p?.name}
+          {p?.titel ? `🌙 ${p.titel}` : `${t("reader.fuer")} ${p?.name}`}
         </h1>
         <p className="text-indigo-400 text-sm mb-8">
+          {p?.titel ? `${t("reader.fuer")} ${p?.name} · ` : ""}
           {p?.alter} {t("gemein.jahre")} · {p?.stichwörter} · {p?.stil}
           {p?.dauer ? ` · ~${p.dauer} ${t("gemein.min")}` : ""}
         </p>

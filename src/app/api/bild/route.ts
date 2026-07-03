@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
+import { verifiziereNutzer } from "@/lib/serverAuth"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
 
 export async function POST(request: NextRequest) {
   try {
+    const uid = await verifiziereNutzer(request)
+    if (!uid) return NextResponse.json({ fehler: "Nicht angemeldet" }, { status: 401 })
+
     const { stichwörter, stil } = await request.json()
 
     const prompt = `Eine warme, freundliche Kinderbuch-Illustration für eine Gute-Nacht-Geschichte.
