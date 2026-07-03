@@ -13,9 +13,14 @@ type AboDetails = {
     kinder: number
     status?: string
     wird_gekuendigt?: boolean
-    wechsel_ab?: number
+    naechster_plan?: {
+      plan: string
+      kinder: number
+      ab: number
+    }
   }
   nextBilling: number | null
+  periodStart: number | null
   cancelAtPeriodEnd: boolean
 }
 
@@ -95,23 +100,37 @@ export default function AboPage() {
   const planInfo = details ? PLAN_INFO[details.abo.plan] : null
   const istJahr = details?.abo.plan === "familie-jahr"
 
-  const planName = details
-    ? details.abo.plan === "light"
+  function planNameFuer(plan: string) {
+    return plan === "light"
       ? t("plan.light")
-      : details.abo.plan === "familie"
+      : plan === "familie"
       ? t("plan.familie")
       : t("plan.familieJahr")
-    : ""
+  }
 
-  const nextBillingFormatted = details?.nextBilling
-    ? new Date(details.nextBilling * 1000).toLocaleDateString(sprache === "de" ? "de-DE" : "en-GB", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-      })
-    : "–"
+  function formatDatum(ts: number) {
+    return new Date(ts * 1000).toLocaleDateString(sprache === "de" ? "de-DE" : "en-GB", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    })
+  }
+
+  function formatPreis(plan: string, kinder: number) {
+    const info = PLAN_INFO[plan]
+    if (!info) return ""
+    return (
+      berechnePreis(plan, kinder).toFixed(2).replace(".", sprache === "de" ? "," : ".") +
+      " € / " +
+      (info.periode === "Jahr" ? t("preise.jahr") : t("preise.monat"))
+    )
+  }
+
+  const planName = details ? planNameFuer(details.abo.plan) : ""
+  const nextBillingFormatted = details?.nextBilling ? formatDatum(details.nextBilling) : "–"
 
   const wirdGekuendigt = details?.cancelAtPeriodEnd || details?.abo.wird_gekuendigt
+  const naechster = details?.abo.naechster_plan
 
   return (
     <SchutzRoute>
@@ -158,6 +177,7 @@ export default function AboPage() {
               </div>
             )}
 
+            {/* Aktueller Plan */}
             <div className="bg-indigo-900 rounded-2xl p-6 flex flex-col gap-4">
               <div className="flex justify-between items-center">
                 <span className="text-indigo-400 text-sm">{t("abo.plan")}</span>
@@ -173,33 +193,23 @@ export default function AboPage() {
                 <div className="flex justify-between items-center">
                   <span className="text-indigo-400 text-sm">{t("abo.kosten")}</span>
                   <span className="text-white font-bold">
-                    {berechnePreis(details.abo.plan, details.abo.kinder)
-                      .toFixed(2)
-                      .replace(".", sprache === "de" ? "," : ".")}{" "}
-                    € / {planInfo.periode === "Jahr" ? t("preise.jahr") : t("preise.monat")}
+                    {formatPreis(details.abo.plan, details.abo.kinder)}
                   </span>
                 </div>
               )}
 
-              {details.nextBilling && (
+              {/* Laufzeit bis: nur bei Kündigung oder anstehendem Wechsel */}
+              {(wirdGekuendigt || naechster) && details.nextBilling ? (
+                <div className="flex justify-between items-center">
+                  <span className="text-indigo-400 text-sm">{t("abo.laufzeitBis")}</span>
+                  <span className="text-white font-bold">{nextBillingFormatted}</span>
+                </div>
+              ) : details.nextBilling ? (
                 <div className="flex justify-between items-center">
                   <span className="text-indigo-400 text-sm">{t("abo.naechsteAbrechnung")}</span>
                   <span className="text-white font-bold">{nextBillingFormatted}</span>
                 </div>
-              )}
-
-              {/* Geplanter Tarifwechsel: neuer Preis gilt ab diesem Datum */}
-              {details.abo.wechsel_ab && details.abo.wechsel_ab * 1000 > Date.now() && (
-                <div className="flex justify-between items-center">
-                  <span className="text-indigo-400 text-sm">{t("abo.neuerTarifAb")}</span>
-                  <span className="text-yellow-300 font-bold">
-                    {new Date(details.abo.wechsel_ab * 1000).toLocaleDateString(
-                      sprache === "de" ? "de-DE" : "en-GB",
-                      { day: "2-digit", month: "long", year: "numeric" }
-                    )}
-                  </span>
-                </div>
-              )}
+              ) : null}
 
               <div className="flex justify-between items-center">
                 <span className="text-indigo-400 text-sm">Status</span>
@@ -214,6 +224,35 @@ export default function AboPage() {
                 </span>
               </div>
             </div>
+
+            {/* Nächster Plan (bei anstehendem Tarifwechsel) */}
+            {naechster && (
+              <div className="bg-indigo-900 border border-yellow-400/40 rounded-2xl p-6 flex flex-col gap-4">
+                <h2 className="text-yellow-300 font-bold">{t("abo.naechsterPlan")}</h2>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-indigo-400 text-sm">{t("abo.plan")}</span>
+                  <span className="text-white font-bold">{planNameFuer(naechster.plan)}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-indigo-400 text-sm">{t("abo.kinder")}</span>
+                  <span className="text-white font-bold">{naechster.kinder}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-indigo-400 text-sm">{t("abo.kosten")}</span>
+                  <span className="text-white font-bold">
+                    {formatPreis(naechster.plan, naechster.kinder)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-indigo-400 text-sm">{t("abo.naechsteAbrechnungAb")}</span>
+                  <span className="text-yellow-300 font-bold">{formatDatum(naechster.ab)}</span>
+                </div>
+              </div>
+            )}
 
             {istJahr && (
               <div className="bg-indigo-800/60 border border-indigo-700 rounded-2xl px-5 py-3 text-indigo-300 text-sm">

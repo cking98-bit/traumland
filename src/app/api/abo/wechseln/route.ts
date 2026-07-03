@@ -84,15 +84,18 @@ export async function POST(req: NextRequest) {
       cancel_at_period_end: false,
     })
 
-    // Firestore: neuen Plan speichern + ab wann die neue Abrechnung gilt
+    // Firestore: aktueller Plan bleibt bis zum Periodenende aktiv,
+    // der neue Plan wird als "naechster_plan" vorgemerkt
     await adminDb.collection("users").doc(uid).set(
       {
         abo: {
-          plan,
-          kinder: Number(kinder),
           status: "aktiv",
           wird_gekuendigt: false,
-          wechsel_ab: periodEnd,
+          naechster_plan: {
+            plan,
+            kinder: Number(kinder),
+            ab: periodEnd,
+          },
         },
       },
       { merge: true }

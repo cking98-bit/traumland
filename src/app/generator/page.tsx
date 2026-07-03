@@ -39,6 +39,14 @@ export default function GeneratorPage() {
   const [fehler, setFehler] = useState("")
   const [vorherige, setVorherige] = useState<Geschichte | null>(null)
 
+  // Geschichten-Zähler für den laufenden Abrechnungszeitraum
+  const [zaehler, setZaehler] = useState<{
+    erstellt: number
+    gesamt: number
+    verbleibend: number
+    heuteErstellt: boolean
+  } | null>(null)
+
   useEffect(() => {
     const geladen = ladeProfile()
     setProfile(geladen)
@@ -74,6 +82,17 @@ export default function GeneratorPage() {
       setProfilId(geladen[0].id)
     }
   }, [])
+
+  // Zähler laden, sobald Nutzer + Kind feststehen
+  useEffect(() => {
+    if (!nutzer || !profilId) return
+    fetch(`/api/geschichte/zaehler?uid=${nutzer.uid}&profilId=${profilId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.fehler) setZaehler(data)
+      })
+      .catch(() => {})
+  }, [nutzer, profilId])
 
   const ausgewählt = profile.find((p) => p.id === profilId)
 
@@ -223,6 +242,27 @@ export default function GeneratorPage() {
           </div>
         ) : (
           <div className="bg-indigo-900 rounded-2xl p-8 flex flex-col gap-6">
+            {/* Geschichten-Zähler für den Abrechnungszeitraum */}
+            {zaehler && (
+              <div
+                className={`rounded-xl px-4 py-3 text-sm ${
+                  zaehler.heuteErstellt
+                    ? "bg-orange-500/10 border border-orange-400/40 text-orange-300"
+                    : "bg-indigo-800/60 border border-indigo-700 text-indigo-200"
+                }`}
+              >
+                <p className="font-medium">
+                  ✨{" "}
+                  {t("gen.zaehler")
+                    .replace("{verbleibend}", String(zaehler.verbleibend))
+                    .replace("{gesamt}", String(zaehler.gesamt))}
+                </p>
+                {zaehler.heuteErstellt && (
+                  <p className="text-xs mt-1">{t("gen.zaehlerHeute")}</p>
+                )}
+              </div>
+            )}
+
             {vorherige && (
               <div className="bg-yellow-400/10 border border-yellow-400/40 rounded-xl px-4 py-3">
                 <p className="text-yellow-300 font-bold text-sm">

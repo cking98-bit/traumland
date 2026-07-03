@@ -258,6 +258,13 @@ export const texte: Record<Sprache, Dict> = {
     "wechsel.fehler": "Der Tarifwechsel ist fehlgeschlagen. Bitte versuche es erneut.",
     "wechsel.jahrGesperrt": "Der Jahrestarif kann nicht gewechselt, sondern nur gekündigt werden.",
     "abo.neuerTarifAb": "Neue Abrechnung ab",
+    "abo.naechsterPlan": "Nächster Plan",
+    "abo.laufzeitBis": "Laufzeit bis",
+    "abo.naechsteAbrechnungAb": "Nächste Abrechnung",
+
+    // Geschichten-Zähler
+    "gen.zaehler": "{verbleibend} von {gesamt} Geschichten im aktuellen Abrechnungszeitraum verfügbar",
+    "gen.zaehlerHeute": "Heute wurde für dieses Kind schon eine Geschichte erstellt – morgen geht es weiter 🌙",
 
     // Footer
     "footer.impressum": "Impressum",
@@ -507,6 +514,13 @@ export const texte: Record<Sprache, Dict> = {
     "wechsel.fehler": "The plan change failed. Please try again.",
     "wechsel.jahrGesperrt": "The yearly plan cannot be changed, only cancelled.",
     "abo.neuerTarifAb": "New billing from",
+    "abo.naechsterPlan": "Next plan",
+    "abo.laufzeitBis": "Active until",
+    "abo.naechsteAbrechnungAb": "Next billing",
+
+    // Story counter
+    "gen.zaehler": "{verbleibend} of {gesamt} stories available in the current billing period",
+    "gen.zaehlerHeute": "A story has already been created for this child today – come back tomorrow 🌙",
 
     // Footer
     "footer.impressum": "Imprint",

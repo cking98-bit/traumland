@@ -10,7 +10,12 @@ export type Abo = {
   stripeSubscriptionId?: string
   stripeCustomerId?: string
   wird_gekuendigt?: boolean
-  wechsel_ab?: number // Unix-Timestamp: ab wann der neue Tarif abgerechnet wird
+  wechsel_ab?: number // (veraltet) Unix-Timestamp des Tarifwechsels
+  naechster_plan?: {
+    plan: string
+    kinder: number
+    ab: number // Unix-Timestamp: ab wann der neue Tarif gilt
+  }
 }
 
 export async function ladeAbo(uid: string): Promise<Abo | null> {
