@@ -296,7 +296,7 @@ export const texte: Record<Sprache, Dict> = {
     "home.vertrauen1": "Die Daten deines Kindes bleiben privat",
     "home.vertrauen2": "Keine Werbung",
     "home.vertrauen3": "Jederzeit kündbar",
-    "home.faqTitel": "Häufige Fragen",
+    "home.faqTitel": "Häufig gestellte Fragen",
 
     // FAQ
     "faq.daten.frage": "Was passiert mit den Daten meines Kindes?",

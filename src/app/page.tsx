@@ -3,11 +3,14 @@
 import Link from "next/link"
 import Features from "@/components/Features"
 import { useSprache } from "@/components/LanguageProvider"
+import { useAuth } from "@/components/AuthProvider"
 
 const FAQ_IDS = ["daten", "kuendigen", "kindgerecht", "personalisierung", "geraete", "gratis"]
 
 export default function Home() {
   const { t, sprache } = useSprache()
+  const { abo } = useAuth()
+  const hatAbo = !!abo && abo.status !== "gekuendigt"
   const demoAudio = sprache === "en" ? "/demo-audio-en.wav" : "/demo-audio.wav"
 
   return (
@@ -24,9 +27,11 @@ export default function Home() {
           href="/generator"
           className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-10 py-4 rounded-full text-lg transition inline-block"
         >
-          {t("home.ctaGratis")}
+          {hatAbo ? t("home.cta") : t("home.ctaGratis")}
         </Link>
-        <p className="text-indigo-400 text-xs mt-3">{t("home.ctaHinweis")}</p>
+        {!hatAbo && (
+          <p className="text-indigo-400 text-xs mt-3">{t("home.ctaHinweis")}</p>
+        )}
       </div>
 
       {/* Beispiel-Geschichte */}
@@ -84,11 +89,11 @@ export default function Home() {
         <Features />
       </div>
 
-      {/* Vertrauen */}
-      <div className="mt-16 bg-indigo-900/60 border border-indigo-800 rounded-2xl px-6 py-5 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-8 text-indigo-200 text-sm text-center">
-        <span>🔒 {t("home.vertrauen1")}</span>
-        <span>🚫 {t("home.vertrauen2")}</span>
-        <span>✅ {t("home.vertrauen3")}</span>
+      {/* Vertrauen: links / Mitte / rechts */}
+      <div className="mt-16 bg-indigo-900/60 border border-indigo-800 rounded-2xl px-6 py-5 flex flex-col sm:flex-row items-center sm:justify-between gap-3 text-indigo-200 text-sm">
+        <span className="sm:text-left">🔒 {t("home.vertrauen1")}</span>
+        <span className="sm:text-center">🚫 {t("home.vertrauen2")}</span>
+        <span className="sm:text-right">✅ {t("home.vertrauen3")}</span>
       </div>
 
       {/* FAQ */}
