@@ -7,7 +7,8 @@ import { useSprache } from "@/components/LanguageProvider"
 const FAQ_IDS = ["daten", "kuendigen", "kindgerecht", "personalisierung", "geraete", "gratis"]
 
 export default function Home() {
-  const { t } = useSprache()
+  const { t, sprache } = useSprache()
+  const demoAudio = sprache === "en" ? "/demo-audio-en.wav" : "/demo-audio.wav"
 
   return (
     <div className="py-12">
@@ -47,10 +48,10 @@ export default function Home() {
             {t("home.beispielText")}
           </p>
 
-          {/* Hörprobe */}
+          {/* Hörprobe – Quelle wechselt mit der Sprache */}
           <p className="text-indigo-300 text-xs mb-2">🔊 {t("home.hoerprobe")}</p>
-          <audio controls preload="none" className="w-full h-10">
-            <source src="/demo-audio.wav" type="audio/wav" />
+          <audio key={sprache} controls preload="none" className="w-full h-10">
+            <source src={demoAudio} type="audio/wav" />
           </audio>
         </div>
       </div>
