@@ -92,6 +92,10 @@ function PlanKarte({ plan }: { plan: Plan }) {
   const [zeigWechsel, setZeigWechsel] = useState(false)
   const [wechselDatum, setWechselDatum] = useState<number | null>(null)
 
+  // Kauf-Bestätigung mit Widerrufs-Zustimmung (§ 356 Abs. 4 BGB)
+  const [zeigKauf, setZeigKauf] = useState(false)
+  const [zustimmung, setZustimmung] = useState(false)
+
   const gesamtPreis = plan.basisPreis + (kinder - 1) * plan.proKind
   const periode = t(plan.periodeKey)
 
@@ -278,10 +282,60 @@ function PlanKarte({ plan }: { plan: Plan }) {
             </button>
           </div>
         </div>
+      ) : zeigKauf ? (
+        /* Kauf-Bestätigung: ausdrückliche Zustimmung vor Vertragsbeginn */
+        <div className="bg-indigo-800 border border-yellow-400/40 rounded-xl p-4 mb-2">
+          <h3 className="text-white font-bold text-sm mb-3">{t("kauf.titel")}</h3>
+
+          <label className="flex items-start gap-3 cursor-pointer mb-4">
+            <input
+              type="checkbox"
+              checked={zustimmung}
+              onChange={(e) => setZustimmung(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-yellow-400"
+            />
+            <span className="text-indigo-200 text-xs leading-relaxed">
+              {t("kauf.zustimmung")}{" "}
+              <a href="/agb" target="_blank" className="text-yellow-400 underline">
+                {t("preise.agbLink")}
+              </a>{" "}
+              &{" "}
+              <a href="/widerruf" target="_blank" className="text-yellow-400 underline">
+                {t("preise.widerrufLink")}
+              </a>
+            </span>
+          </label>
+
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={neuAbschliessen}
+              disabled={laedt || !zustimmung}
+              className="w-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 text-indigo-950 font-bold py-2.5 rounded-lg text-sm transition"
+            >
+              {laedt ? "…" : t("kauf.weiter")}
+            </button>
+            <button
+              onClick={() => {
+                setZeigKauf(false)
+                setZustimmung(false)
+              }}
+              disabled={laedt}
+              className="w-full bg-indigo-700 hover:bg-indigo-600 text-white font-bold py-2.5 rounded-lg text-sm transition"
+            >
+              {t("wechsel.abbrechen")}
+            </button>
+          </div>
+        </div>
       ) : (
         <button
           disabled={laedt || istAktuellerPlan}
-          onClick={hatAbo ? wechselStarten : neuAbschliessen}
+          onClick={
+            hatAbo
+              ? wechselStarten
+              : nutzer
+              ? () => setZeigKauf(true)
+              : () => router.push("/login")
+          }
           className={`w-full font-bold py-3 rounded-xl transition disabled:opacity-60 ${
             plan.beliebt
               ? "bg-yellow-400 hover:bg-yellow-300 text-indigo-950"

@@ -55,6 +55,19 @@ export default function WiderrufPage() {
           </section>
 
           <section>
+            <h2 className="text-white font-bold text-lg mb-2">Vorzeitiges Erlöschen des Widerrufsrechts</h2>
+            <p>
+              Das Widerrufsrecht erlischt bei einem Vertrag über die Erbringung von
+              Dienstleistungen vorzeitig, wenn wir die Dienstleistung vollständig erbracht
+              haben und mit der Ausführung erst begonnen haben, nachdem du dazu deine
+              ausdrückliche Zustimmung gegeben und gleichzeitig deine Kenntnis davon
+              bestätigt hast, dass du dein Widerrufsrecht bei vollständiger Vertragserfüllung
+              durch uns verlierst (§ 356 Abs. 4 BGB). Diese Zustimmung holen wir beim
+              Abschluss des Abonnements ein.
+            </p>
+          </section>
+
+          <section>
             <h2 className="text-white font-bold text-lg mb-2">Muster-Widerrufsformular</h2>
             <div className="bg-indigo-800/60 border border-indigo-700 rounded-xl p-5 font-mono text-xs leading-relaxed">
               <p>

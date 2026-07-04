@@ -353,6 +353,9 @@ export const texte: Record<Sprache, Dict> = {
     // Preise (rechtlich)
     "preise.agbHinweis1": "Mit dem Kauf akzeptierst du unsere",
     "preise.agbHinweis2": "und die",
+    "kauf.titel": "Bevor es losgeht",
+    "kauf.zustimmung": "Ich verlange ausdrücklich, dass mit der Ausführung des Vertrags vor Ablauf der Widerrufsfrist begonnen wird. Mir ist bekannt, dass mein Widerrufsrecht bei vollständiger Vertragserfüllung erlischt. Es gelten die",
+    "kauf.weiter": "Weiter zur Bezahlung",
     "preise.agbLink": "AGB",
     "preise.widerrufLink": "Widerrufsbelehrung",
   },
@@ -695,6 +698,9 @@ export const texte: Record<Sprache, Dict> = {
     // Pricing (legal)
     "preise.agbHinweis1": "By purchasing you accept our",
     "preise.agbHinweis2": "and the",
+    "kauf.titel": "Before you subscribe",
+    "kauf.zustimmung": "I expressly request that performance of the contract begins before the end of the withdrawal period. I am aware that I lose my right of withdrawal once the contract has been fully performed. The following apply:",
+    "kauf.weiter": "Continue to payment",
     "preise.agbLink": "Terms",
     "preise.widerrufLink": "withdrawal policy",
   },

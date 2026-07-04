@@ -35,8 +35,12 @@ export default function DatenschutzPage() {
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li>E-Mail-Adresse (bei Registrierung)</li>
               <li>Name des Kindes und Geburtsdatum (für Kinderprofil)</li>
-              <li>Stichwörter und Präferenzen für die Geschichte</li>
+              <li>Stichwörter, Stil-Präferenzen und optionale Themen für die Geschichten</li>
+              <li>Erstellte Geschichten samt Illustrationen (in deiner Bibliothek, max. 10)</li>
+              <li>Nutzungszähler (Anzahl erstellter Geschichten pro Abrechnungszeitraum)</li>
+              <li>Abo-Daten (Tarif, Anzahl Kinder, Stripe-Kunden- und Abonnement-ID)</li>
               <li>Zahlungsdaten (werden direkt an Stripe übermittelt, nicht bei uns gespeichert)</li>
+              <li>Bei Nutzung des Kündigungsformulars: E-Mail-Adresse, ggf. Name, Eingangsdatum</li>
             </ul>
           </section>
 
@@ -55,9 +59,21 @@ export default function DatenschutzPage() {
           <section>
             <h2 className="text-white font-bold text-lg mb-2">4. Drittanbieter</h2>
 
+            <h3 className="text-white font-semibold mt-3 mb-1">Vercel (Hosting)</h3>
+            <p>
+              Diese Website wird bei Vercel Inc., 440 N Barranca Ave #4133, Covina, CA 91723, USA gehostet.
+              Beim Aufruf der Seite verarbeitet Vercel technisch notwendige Verbindungsdaten
+              (u. a. IP-Adresse, Zeitpunkt des Zugriffs) in Server-Logs. Datenschutzerklärung:{" "}
+              <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:text-yellow-300">
+                vercel.com/legal/privacy-policy
+              </a>
+            </p>
+
             <h3 className="text-white font-semibold mt-3 mb-1">Firebase (Google LLC)</h3>
             <p>
-              Wir nutzen Firebase für Authentifizierung und Datenspeicherung. Anbieter ist Google LLC, 1600 Amphitheatre
+              Wir nutzen Firebase für Authentifizierung und Datenspeicherung (Firestore). Dort werden dein
+              Konto, die Kinderprofile, deine Bibliothek mit Geschichten und Bildern sowie Abo- und
+              Nutzungsdaten gespeichert. Anbieter ist Google LLC, 1600 Amphitheatre
               Parkway, Mountain View, CA 94043, USA. Datenschutzerklärung:{" "}
               <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:text-yellow-300">
                 firebase.google.com/support/privacy
@@ -75,8 +91,9 @@ export default function DatenschutzPage() {
 
             <h3 className="text-white font-semibold mt-3 mb-1">Google Gemini AI</h3>
             <p>
-              Zur Generierung von Geschichten und Illustrationen nutzen wir die Google Gemini API. Die Anfragen
-              enthalten den Kindernamen, Alter und Stichwörter. Datenschutzerklärung:{" "}
+              Zur Generierung von Geschichten, Illustrationen und der Vorlesestimme nutzen wir die Google
+              Gemini API. Die Anfragen enthalten den Kindernamen, das Alter, Stichwörter, gewählte Stile
+              und Themen sowie für die Vorlesefunktion den Geschichtentext. Datenschutzerklärung:{" "}
               <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:text-yellow-300">
                 ai.google.dev/gemini-api/terms
               </a>
@@ -84,16 +101,28 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h2 className="text-white font-bold text-lg mb-2">5. Cookies</h2>
+            <h2 className="text-white font-bold text-lg mb-2">5. Datenübermittlung in Drittländer</h2>
             <p>
-              Wir verwenden technisch notwendige Cookies für die Authentifizierung (Firebase Session-Cookie) sowie
-              lokale Speicherung (localStorage) für Kinderprofil-Daten und Geschichten. Diese Daten verlassen dein
-              Gerät nicht und werden nicht für Werbezwecke genutzt.
+              Die genannten Anbieter (Vercel, Google, Stripe) verarbeiten Daten auch in den USA.
+              Google LLC, Stripe Inc. und Vercel Inc. sind unter dem EU-U.S. Data Privacy Framework
+              zertifiziert; ergänzend kommen EU-Standardvertragsklauseln (Art. 46 DSGVO) zum Einsatz.
+              Damit besteht ein von der EU-Kommission anerkanntes Datenschutzniveau.
             </p>
           </section>
 
           <section>
-            <h2 className="text-white font-bold text-lg mb-2">6. Kinder und besondere Datenkategorien</h2>
+            <h2 className="text-white font-bold text-lg mb-2">6. Cookies und lokale Speicherung</h2>
+            <p>
+              Wir verwenden ausschließlich technisch notwendige Cookies für die Anmeldung
+              (Session-Cookie) sowie localStorage für deine Cookie-Einwilligung und Spracheinstellung.
+              Es gibt keine Tracking- oder Werbe-Cookies. Deine Kinderprofile und Geschichten werden
+              in deinem Nutzerkonto (Firebase Firestore) gespeichert, damit sie auf allen deinen
+              Geräten verfügbar sind.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-white font-bold text-lg mb-2">7. Kinder und besondere Datenkategorien</h2>
             <p>
               Unser Dienst richtet sich an Eltern. Wir erheben keine Daten direkt von Kindern. Die Angaben zu Kindern
               (Vorname, Geburtsdatum) werden von Eltern/Erziehungsberechtigten eingegeben und ausschließlich zur
@@ -102,7 +131,7 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h2 className="text-white font-bold text-lg mb-2">7. Rechtsgrundlage</h2>
+            <h2 className="text-white font-bold text-lg mb-2">8. Rechtsgrundlage</h2>
             <p>
               Die Verarbeitung deiner Daten erfolgt auf Basis von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung)
               sowie Art. 6 Abs. 1 lit. f DSGVO (berechtigte Interessen an der sicheren Bereitstellung des Dienstes).
@@ -110,7 +139,7 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h2 className="text-white font-bold text-lg mb-2">8. Deine Rechte</h2>
+            <h2 className="text-white font-bold text-lg mb-2">9. Deine Rechte</h2>
             <p>Du hast das Recht auf:</p>
             <ul className="list-disc list-inside mt-2 space-y-1">
               <li>Auskunft über deine gespeicherten Daten (Art. 15 DSGVO)</li>
@@ -129,7 +158,7 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h2 className="text-white font-bold text-lg mb-2">9. Beschwerderecht</h2>
+            <h2 className="text-white font-bold text-lg mb-2">10. Beschwerderecht</h2>
             <p>
               Du hast das Recht, dich bei einer Datenschutz-Aufsichtsbehörde zu beschweren. Zuständig für Berlin ist
               die Berliner Beauftragte für Datenschutz und Informationsfreiheit.
@@ -137,15 +166,18 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h2 className="text-white font-bold text-lg mb-2">10. Datenlöschung bei Kontokündigung</h2>
+            <h2 className="text-white font-bold text-lg mb-2">11. Speicherdauer und Datenlöschung</h2>
             <p>
-              Bei Kündigung deines Kontos werden alle personenbezogenen Daten innerhalb von 30 Tagen gelöscht,
-              sofern keine gesetzlichen Aufbewahrungspflichten entgegenstehen.
+              Kontodaten, Profile und Geschichten speichern wir für die Dauer der Vertragsbeziehung.
+              Bei Löschung deines Kontos werden alle personenbezogenen Daten innerhalb von 30 Tagen
+              gelöscht, sofern keine gesetzlichen Aufbewahrungspflichten (z. B. steuerrechtliche
+              Fristen für Rechnungsdaten) entgegenstehen. Kündigungsanfragen über das
+              Kündigungsformular bewahren wir zu Nachweiszwecken bis zu 3 Jahre auf.
             </p>
           </section>
 
           <p className="text-indigo-400 text-xs pt-4 border-t border-indigo-700">
-            Stand: Juli 2025
+            Stand: Juli 2026
           </p>
         </div>
       </div>
