@@ -7,7 +7,7 @@ import {
   useState,
   useCallback,
 } from "react"
-import { onAuthStateChanged, User } from "firebase/auth"
+import { onIdTokenChanged, User } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import { ladeNutzerDaten, type Abo } from "@/lib/abo"
 
@@ -65,20 +65,30 @@ export default function AuthProvider({
       setAboLaden(false)
       return
     }
-    const abmelden = onAuthStateChanged(auth, async (user) => {
+    // onIdTokenChanged feuert bei Login/Logout UND bei jeder Token-Erneuerung
+    // (stündlich) – so bleibt das Session-Cookie immer frisch und die
+    // Navigation zu geschützten Seiten funktioniert auch nach längerer Zeit.
+    let vorherigeUid: string | null = null
+    const abmelden = onIdTokenChanged(auth, async (user) => {
       setNutzer(user)
       setLaden(false)
 
       if (user) {
         const token = await user.getIdToken()
-        document.cookie = `__session=${token}; path=/; max-age=3600; SameSite=Strict`
+        document.cookie = `__session=${token}; path=/; max-age=1209600; SameSite=Strict`
 
-        setAboLaden(true)
-        const daten = await ladeNutzerDaten(user.uid)
-        setAbo(daten.abo)
-        setGratisGenutzt(daten.gratisGenutzt)
-        setAboLaden(false)
+        // Abo nur neu laden, wenn sich der Nutzer geändert hat
+        // (nicht bei jeder Token-Erneuerung)
+        if (vorherigeUid !== user.uid) {
+          vorherigeUid = user.uid
+          setAboLaden(true)
+          const daten = await ladeNutzerDaten(user.uid)
+          setAbo(daten.abo)
+          setGratisGenutzt(daten.gratisGenutzt)
+          setAboLaden(false)
+        }
       } else {
+        vorherigeUid = null
         document.cookie = "__session=; path=/; max-age=0"
         setAbo(null)
         setGratisGenutzt(false)
