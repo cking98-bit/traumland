@@ -152,7 +152,7 @@ export default function GeneratorPage() {
 
   // Light-Tarif: Geschichten bis maximal 5 Minuten
   const istLight = abo?.plan === "light"
-  const verfuegbareDauern = istLight ? DAUER.filter((d) => d.id !== "10") : DAUER
+  const [zeigUpgrade, setZeigUpgrade] = useState(false)
 
   useEffect(() => {
     if (istLight && dauer === "10") setDauer("5")
@@ -564,29 +564,42 @@ export default function GeneratorPage() {
                 </div>
               ) : (
                 <>
-                  <div
-                    className={`grid gap-3 ${
-                      verfuegbareDauern.length === 3 ? "grid-cols-3" : "grid-cols-2"
-                    }`}
-                  >
-                    {verfuegbareDauern.map((d) => (
-                      <button
-                        key={d.id}
-                        onClick={() => setDauer(d.id)}
-                        className={`rounded-xl py-3 text-sm font-medium transition ${
-                          dauer === d.id
-                            ? "bg-yellow-400 text-indigo-950"
-                            : "bg-indigo-800 hover:bg-indigo-700 text-white"
-                        }`}
-                      >
-                        {t(d.key)}
-                      </button>
-                    ))}
+                  <div className="grid grid-cols-3 gap-3">
+                    {DAUER.map((d) => {
+                      const gesperrt = istLight && d.id === "10"
+                      return (
+                        <button
+                          key={d.id}
+                          onClick={() =>
+                            gesperrt ? setZeigUpgrade(!zeigUpgrade) : setDauer(d.id)
+                          }
+                          className={`rounded-xl py-3 text-sm font-medium transition ${
+                            gesperrt
+                              ? "border border-dashed border-indigo-600 text-indigo-500 hover:text-indigo-400 bg-transparent"
+                              : dauer === d.id
+                              ? "bg-yellow-400 text-indigo-950"
+                              : "bg-indigo-800 hover:bg-indigo-700 text-white"
+                          }`}
+                        >
+                          {gesperrt ? `🔒 ${t(d.key)}` : t(d.key)}
+                        </button>
+                      )
+                    })}
                   </div>
-                  {istLight && (
-                    <p className="text-indigo-400 text-xs mt-2">
-                      {t("gen.dauerLightHint")}
-                    </p>
+
+                  {/* Upgrade-Karte: erscheint beim Klick auf die gesperrte Option */}
+                  {istLight && zeigUpgrade && (
+                    <div className="mt-3 bg-indigo-950 border border-yellow-400/40 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <p className="text-indigo-100 text-sm">
+                        {t("gen.dauerGesperrt")}
+                      </p>
+                      <Link
+                        href="/preise"
+                        className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold text-sm px-4 py-2 rounded-lg text-center transition whitespace-nowrap"
+                      >
+                        {t("gen.jetztWechseln")}
+                      </Link>
+                    </div>
                   )}
                 </>
               )}
