@@ -35,6 +35,10 @@ export async function POST(request: NextRequest) {
     let istGratisGeschichte = false
 
     if (hatAbo) {
+      // Light-Tarif: Geschichten bis maximal 5 Minuten
+      if (abo.plan === "light" && Number(dauer) > 5) {
+        dauer = "5"
+      }
       // Kontingent: so viele Geschichten wie Tage im Abrechnungszeitraum
       if (profilId) {
         const kontingent = await holeKontingent(uid, profilId)

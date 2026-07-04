@@ -16,6 +16,7 @@ import SchutzRoute from "@/components/SchutzRoute"
 import { useSprache } from "@/components/LanguageProvider"
 import { useAuth } from "@/components/AuthProvider"
 import { authFetch } from "@/lib/apiClient"
+import { texte } from "@/lib/i18n"
 
 const STIL_IDS = ["abenteuer", "maerchen", "lustig", "weltraum", "tiere", "fantasy"]
 const THEMA_IDS = ["mut", "einschlafen", "zaehneputzen", "teilen", "kita", "freundschaft", "dunkelheit"]
@@ -25,6 +26,23 @@ const DAUER = [
   { id: "5", key: "dauer.mittel" },
   { id: "10", key: "dauer.lang" },
 ]
+
+// "Abenteuer 🗺️" → "Abenteuer" (Label ohne Emoji, großgeschrieben)
+function stilLabel(id: string, uebersetze: (k: string) => string): string {
+  return uebersetze(`stil.${id}`).replace(/[^\p{L}\p{N}\s-]+/gu, "").trim()
+}
+
+// Gespeicherten Stil-Text (Label oder alte Klein-ID) zurück zur Stil-ID mappen
+function zuStilId(wert: string): string | null {
+  const w = wert.trim().toLowerCase()
+  if (!w) return null
+  for (const id of STIL_IDS) {
+    if (id === w) return id
+    if (texte.de[`stil.${id}`]?.toLowerCase().startsWith(w)) return id
+    if (texte.en[`stil.${id}`]?.toLowerCase().startsWith(w)) return id
+  }
+  return null
+}
 
 export default function GeneratorPage() {
   const router = useRouter()
@@ -77,7 +95,12 @@ export default function GeneratorPage() {
         if (alt) {
           setVorherige(alt)
           setStichwörter(alt.stichwörter)
-          setStil(alt.stil.split(",").map((s) => s.trim()).filter(Boolean))
+          setStil(
+            alt.stil
+              .split(",")
+              .map((s) => zuStilId(s))
+              .filter((s): s is string => !!s)
+          )
           setDauer(alt.dauer)
           if (alt.sprache === "de" || alt.sprache === "en") {
             setGeschichteSprache(alt.sprache)
@@ -127,9 +150,19 @@ export default function GeneratorPage() {
   const bibliothekVoll = anzahlGeschichten >= MAX_GESCHICHTEN
   const gratisModus = !hatAbo
 
+  // Light-Tarif: Geschichten bis maximal 5 Minuten
+  const istLight = abo?.plan === "light"
+  const verfuegbareDauern = istLight ? DAUER.filter((d) => d.id !== "10") : DAUER
+
+  useEffect(() => {
+    if (istLight && dauer === "10") setDauer("5")
+  }, [istLight, dauer])
+
   function validieren() {
     if (bibliothekVoll)
       return t("gen.fehler.voll").replace("{n}", String(MAX_GESCHICHTEN))
+    if (!gratisModus && zaehler && zaehler.verbleibend <= 0)
+      return t("gen.fehler.limit")
     if (gratisModus) {
       if (!gratisName.trim()) return t("profil.fehler.name")
       if (!gratisAlter) return t("gen.fehler.alter")
@@ -156,10 +189,22 @@ export default function GeneratorPage() {
     const alter = gratisModus
       ? gratisAlter
       : String(berechneAlter(ausgewählt!.geburtsdatum))
-    const echteDauer = gratisModus ? "2" : dauer
+    // Light-Tarif: maximal 5 Minuten
+    const echteDauer = gratisModus ? "2" : istLight && dauer === "10" ? "5" : dauer
     const themenText = themen.map((id) => t(`thema.${id}`)).join(", ")
+    // Stil als lesbares Label speichern ("Abenteuer, Märchen" statt "abenteuer, maerchen")
+    const stilText = stil.map((id) => stilLabel(id, t)).join(", ")
 
     try {
+      // Bild parallel zur Geschichte generieren – so ist beides zusammen fertig
+      const bildPromise = authFetch("/api/bild", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ stichwörter, stil: stilText }),
+      })
+        .then((r) => r.json())
+        .catch(() => null)
+
       const response = await authFetch("/api/geschichte", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -167,7 +212,7 @@ export default function GeneratorPage() {
           name,
           alter,
           stichwörter,
-          stile: stil.join(", "),
+          stile: stilText,
           themen: themenText || null,
           dauer: echteDauer,
           sprache: geschichteSprache,
@@ -196,7 +241,6 @@ export default function GeneratorPage() {
         return
       }
 
-      const stilText = stil.join(", ")
       const id = await speichereGeschichte(nutzer.uid, {
         name,
         alter,
@@ -211,18 +255,11 @@ export default function GeneratorPage() {
       // Gratis-Status aktualisieren (Flag wurde serverseitig gesetzt)
       if (gratisModus) aboNeuLaden()
 
-      // Bild sofort im Hintergrund generieren & speichern
-      if (id) {
-        authFetch("/api/bild", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ stichwörter, stil: stilText }),
-        })
-          .then((r) => r.json())
-          .then((b) => {
-            if (b.bild) speichereBild(nutzer.uid, id, b.bild)
-          })
-          .catch(() => {})
+      // Auf die Illustration warten und speichern –
+      // die Geschichte öffnet sich erst, wenn beides fertig ist
+      const bildDaten = await bildPromise
+      if (id && bildDaten?.bild) {
+        await speichereBild(nutzer.uid, id, bildDaten.bild)
       }
 
       const params = new URLSearchParams({
@@ -526,21 +563,32 @@ export default function GeneratorPage() {
                   {t("dauer.kurz")}
                 </div>
               ) : (
-                <div className="grid grid-cols-3 gap-3">
-                  {DAUER.map((d) => (
-                    <button
-                      key={d.id}
-                      onClick={() => setDauer(d.id)}
-                      className={`rounded-xl py-3 text-sm font-medium transition ${
-                        dauer === d.id
-                          ? "bg-yellow-400 text-indigo-950"
-                          : "bg-indigo-800 hover:bg-indigo-700 text-white"
-                      }`}
-                    >
-                      {t(d.key)}
-                    </button>
-                  ))}
-                </div>
+                <>
+                  <div
+                    className={`grid gap-3 ${
+                      verfuegbareDauern.length === 3 ? "grid-cols-3" : "grid-cols-2"
+                    }`}
+                  >
+                    {verfuegbareDauern.map((d) => (
+                      <button
+                        key={d.id}
+                        onClick={() => setDauer(d.id)}
+                        className={`rounded-xl py-3 text-sm font-medium transition ${
+                          dauer === d.id
+                            ? "bg-yellow-400 text-indigo-950"
+                            : "bg-indigo-800 hover:bg-indigo-700 text-white"
+                        }`}
+                      >
+                        {t(d.key)}
+                      </button>
+                    ))}
+                  </div>
+                  {istLight && (
+                    <p className="text-indigo-400 text-xs mt-2">
+                      {t("gen.dauerLightHint")}
+                    </p>
+                  )}
+                </>
               )}
             </div>
 
