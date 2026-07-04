@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { speichereBild, ladeGeschichteById } from "@/lib/geschichten"
 import { useSprache } from "@/components/LanguageProvider"
 import { useAuth } from "@/components/AuthProvider"
+import { authFetch } from "@/lib/apiClient"
 
 export default function Illustration({
   stichwörter,
@@ -45,7 +46,7 @@ export default function Illustration({
     setFehler("")
     setLaden(true)
     try {
-      const res = await fetch("/api/bild", {
+      const res = await authFetch("/api/bild", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stichwörter, stil }),
