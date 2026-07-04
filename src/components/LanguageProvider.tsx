@@ -39,7 +39,6 @@ export default function LanguageProvider({
     localStorage.setItem("traumland_sprache", s)
   }
 
-  // Übersetzungs-Funktion: holt den Text, fällt auf Deutsch bzw. den Schlüssel zurück
   function t(key: string): string {
     return texte[sprache][key] ?? texte.de[key] ?? key
   }

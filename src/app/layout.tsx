@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Inter, Nunito } from "next/font/google"
 import "./globals.css"
 import Navigation from "@/components/Navigation"
 import AuthProvider from "@/components/AuthProvider"
@@ -7,7 +7,12 @@ import LanguageProvider from "@/components/LanguageProvider"
 import CookieBanner from "@/components/CookieBanner"
 import Footer from "@/components/Footer"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+const nunito = Nunito({
+  subsets: ["latin"],
+  weight: ["700", "800"],
+  variable: "--font-nunito",
+})
 
 export const metadata: Metadata = {
   title: "Dreamland – KI-Gute-Nacht-Geschichten für dein Kind",
@@ -37,7 +42,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="de">
-      <body className={`${inter.className} bg-indigo-950 min-h-screen flex flex-col`}>
+      <body
+        className={`${inter.className} ${inter.variable} ${nunito.variable} bg-indigo-950 min-h-screen flex flex-col`}
+      >
         <LanguageProvider>
           <AuthProvider>
             <Navigation />

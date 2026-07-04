@@ -1,26 +1,24 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Nachthimmel: sanfter Verlauf oben + wenige feine, statische Sterne */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #1e1b4b;
+  background-image:
+    radial-gradient(ellipse 90% 40% at 50% -5%, rgba(99, 102, 241, 0.22), transparent),
+    radial-gradient(1.5px 1.5px at 12% 8%, rgba(255, 255, 255, 0.45), transparent),
+    radial-gradient(1px 1px at 28% 4%, rgba(255, 255, 255, 0.3), transparent),
+    radial-gradient(2px 2px at 45% 10%, rgba(250, 204, 21, 0.35), transparent),
+    radial-gradient(1px 1px at 63% 5%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1.5px 1.5px at 78% 9%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1px 1px at 90% 3%, rgba(255, 255, 255, 0.28), transparent),
+    radial-gradient(1px 1px at 35% 18%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(1.5px 1.5px at 85% 16%, rgba(255, 255, 255, 0.22), transparent);
+  background-repeat: no-repeat;
+}
+
+/* Überschriften: runde, warme Schrift (Nunito) – Fließtext bleibt Inter */
+h1,
+h2,
+h3 {
+  font-family: var(--font-nunito), var(--font-inter), system-ui, sans-serif;
 }

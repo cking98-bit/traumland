@@ -89,11 +89,25 @@ export default function Home() {
         <Features />
       </div>
 
-      {/* Vertrauen: links / Mitte / rechts */}
-      <div className="mt-16 bg-indigo-900/60 border border-indigo-800 rounded-2xl px-6 py-5 flex flex-col sm:flex-row items-center sm:justify-between gap-3 text-indigo-200 text-sm">
-        <span className="sm:text-left">🔒 {t("home.vertrauen1")}</span>
-        <span className="sm:text-center">🚫 {t("home.vertrauen2")}</span>
-        <span className="sm:text-right">✅ {t("home.vertrauen3")}</span>
+      {/* Vertrauen: drei offene Spalten ohne Box */}
+      <div className="mt-16 grid sm:grid-cols-3 gap-8 text-center">
+        {[
+          { icon: "🔒", key: "vertrauen1" },
+          { icon: "🚫", key: "vertrauen2" },
+          { icon: "✅", key: "vertrauen3" },
+        ].map((v) => (
+          <div key={v.key}>
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-indigo-800 flex items-center justify-center text-xl">
+              {v.icon}
+            </div>
+            <p className="text-white font-bold text-sm mb-1">
+              {t(`home.${v.key}.titel`)}
+            </p>
+            <p className="text-indigo-400 text-xs leading-relaxed max-w-[220px] mx-auto">
+              {t(`home.${v.key}.text`)}
+            </p>
+          </div>
+        ))}
       </div>
 
       {/* FAQ */}

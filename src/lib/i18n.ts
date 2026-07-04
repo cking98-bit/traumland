@@ -13,14 +13,14 @@ export const texte: Record<Sprache, Dict> = {
     "marke": "Dreamland",
 
     // Navigation
-    "nav.start": "🏠 Start",
-    "nav.preise": "💎 Preise",
-    "nav.neu": "✨ Neue Geschichte",
-    "nav.bibliothek": "📚 Bibliothek",
-    "nav.profile": "👧 Profile",
+    "nav.start": "Start",
+    "nav.preise": "Preise",
+    "nav.neu": "Neue Geschichte",
+    "nav.bibliothek": "Bibliothek",
+    "nav.profile": "Profile",
     "nav.anmelden": "Anmelden",
     "nav.abmelden": "Abmelden",
-    "nav.abo": "💳 Abo",
+    "nav.abo": "Abo",
 
     // Startseite
     "home.untertitel": "Personalisierte KI-Gute-Nacht-Geschichten – einzigartig für dein Kind",
@@ -293,9 +293,12 @@ export const texte: Record<Sprache, Dict> = {
     "home.schritt2.text": "Lieblingsthemen, Stil und Länge wählen – auf Wunsch mit pädagogischem Thema wie Mut oder Einschlafen.",
     "home.schritt3.titel": "Vorlesen & Träumen",
     "home.schritt3.text": "In Sekunden entsteht eine einzigartige Geschichte mit Bild – zum Selbstvorlesen oder mit KI-Stimme.",
-    "home.vertrauen1": "Die Daten deines Kindes bleiben privat",
-    "home.vertrauen2": "Keine Werbung",
-    "home.vertrauen3": "Jederzeit kündbar",
+    "home.vertrauen1.titel": "Privatsphäre",
+    "home.vertrauen1.text": "Die Daten deines Kindes bleiben privat – sie werden nie verkauft oder für Werbung genutzt.",
+    "home.vertrauen2.titel": "Keine Werbung",
+    "home.vertrauen2.text": "Dreamland ist komplett werbefrei. Nur Geschichten, keine Ablenkung.",
+    "home.vertrauen3.titel": "Jederzeit kündbar",
+    "home.vertrauen3.text": "Monatstarife kündigst du mit zwei Klicks – direkt in deiner Abo-Verwaltung.",
     "home.faqTitel": "Häufig gestellte Fragen",
 
     // FAQ
@@ -355,14 +358,14 @@ export const texte: Record<Sprache, Dict> = {
   en: {
     "marke": "Dreamland",
 
-    "nav.start": "🏠 Home",
-    "nav.preise": "💎 Pricing",
-    "nav.neu": "✨ New Story",
-    "nav.bibliothek": "📚 Library",
-    "nav.profile": "👧 Profiles",
+    "nav.start": "Home",
+    "nav.preise": "Pricing",
+    "nav.neu": "New Story",
+    "nav.bibliothek": "Library",
+    "nav.profile": "Profiles",
     "nav.anmelden": "Sign in",
     "nav.abmelden": "Sign out",
-    "nav.abo": "💳 Subscription",
+    "nav.abo": "Subscription",
 
     "home.untertitel": "Personalized AI bedtime stories – unique to your child",
     "home.cta": "Create a new story ✨",
@@ -630,9 +633,12 @@ export const texte: Record<Sprache, Dict> = {
     "home.schritt2.text": "Pick favourite topics, style and length – optionally with an educational theme like courage or falling asleep.",
     "home.schritt3.titel": "Read & dream",
     "home.schritt3.text": "A unique story with an illustration is created in seconds – read it yourself or let the AI voice do it.",
-    "home.vertrauen1": "Your child's data stays private",
-    "home.vertrauen2": "No ads",
-    "home.vertrauen3": "Cancel any time",
+    "home.vertrauen1.titel": "Privacy",
+    "home.vertrauen1.text": "Your child's data stays private – never sold, never used for advertising.",
+    "home.vertrauen2.titel": "No ads",
+    "home.vertrauen2.text": "Dreamland is completely ad-free. Just stories, no distractions.",
+    "home.vertrauen3.titel": "Cancel any time",
+    "home.vertrauen3.text": "Cancel monthly plans with two clicks – right in your subscription settings.",
     "home.faqTitel": "Frequently asked questions",
 
     // FAQ
