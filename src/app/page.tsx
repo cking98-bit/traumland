@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import Features from "@/components/Features"
+import DemoPlayer from "@/components/DemoPlayer"
 import { useSprache } from "@/components/LanguageProvider"
 import { useAuth } from "@/components/AuthProvider"
 
@@ -55,9 +56,7 @@ export default function Home() {
 
           {/* Hörprobe – Quelle wechselt mit der Sprache */}
           <p className="text-indigo-300 text-xs mb-2">🔊 {t("home.hoerprobe")}</p>
-          <audio key={sprache} controls preload="none" className="w-full h-10">
-            <source src={demoAudio} type="audio/wav" />
-          </audio>
+          <DemoPlayer key={sprache} src={demoAudio} />
         </div>
       </div>
 

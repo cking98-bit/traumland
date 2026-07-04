@@ -57,7 +57,9 @@ export default function GeschichtePage() {
             />
           )}
 
-          {p?.geschichte && <VorleseButton text={p.geschichte} />}
+          {p?.geschichte && (
+            <VorleseButton text={p.geschichte} titel={p.titel || undefined} />
+          )}
 
           <div className="text-indigo-100 leading-relaxed text-lg whitespace-pre-line">
             {p?.geschichte}
