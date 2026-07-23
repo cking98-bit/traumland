@@ -25,3 +25,47 @@ export async function mitModellFallback<T>(
   }
   return null
 }
+
+// Schickt die Anfrage an ALLE Modelle gleichzeitig und nimmt das erste
+// brauchbare Ergebnis – schneller als Fallback-der-Reihe-nach, weil nicht
+// erst gewartet wird, bis ein Modell scheitert, bevor das nächste startet.
+// Sinnvoll wenn Antwortzeiten stark schwanken (z.B. TTS), Kosten pro
+// Anfrage aber gering sind.
+export async function mitModellWettlauf<T>(
+  modelle: string[],
+  anfrage: (modell: string, signal: AbortSignal) => Promise<T | null>,
+  timeoutMs = 20000
+): Promise<{ daten: T; modell: string } | null> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+
+  const versuche = modelle.map(async (modell) => {
+    try {
+      const daten = await anfrage(modell, controller.signal)
+      if (daten !== null && daten !== undefined) return { daten, modell }
+    } catch (err) {
+      console.error(`Gemini-Modell "${modell}" (Wettlauf) fehlgeschlagen:`, err)
+    }
+    return null
+  })
+
+  try {
+    return await new Promise<{ daten: T; modell: string } | null>((resolve) => {
+      let ausstehend = versuche.length
+      let entschieden = false
+      for (const versuch of versuche) {
+        versuch.then((ergebnis) => {
+          ausstehend--
+          if (!entschieden && ergebnis) {
+            entschieden = true
+            resolve(ergebnis)
+          } else if (ausstehend === 0 && !entschieden) {
+            resolve(null)
+          }
+        })
+      }
+    })
+  } finally {
+    clearTimeout(timeout)
+  }
+}

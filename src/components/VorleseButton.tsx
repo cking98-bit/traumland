@@ -1,18 +1,23 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useSprache } from "@/components/LanguageProvider"
 import { authFetch } from "@/lib/apiClient"
 
-function textZuChunks(text: string, maxZeichen = 250): string[] {
-  const absaetze = text.split(/\n+/).filter((p) => p.trim().length > 0)
+// Der erste Abschnitt bleibt kurz, damit die erste Sprachausgabe
+// möglichst schnell steht – der Rest darf länger sein (spart API-Aufrufe),
+// weil dann schon Audio läuft und die restliche Generierung im Hintergrund
+// weiterlaufen kann.
+function textZuChunks(text: string, ersterMaxZeichen = 90, restMaxZeichen = 250): string[] {
+  const saetze = text.split(/(?<=[.!?…])\s+/).filter((s) => s.trim().length > 0)
   const chunks: string[] = []
   let aktuell = ""
-  for (const absatz of absaetze) {
-    const kombiniert = aktuell ? aktuell + "\n" + absatz : absatz
-    if (aktuell && kombiniert.length > maxZeichen) {
+  for (const satz of saetze) {
+    const grenze = chunks.length === 0 ? ersterMaxZeichen : restMaxZeichen
+    const kombiniert = aktuell ? aktuell + " " + satz : satz
+    if (aktuell && kombiniert.length > grenze) {
       chunks.push(aktuell.trim())
-      aktuell = absatz
+      aktuell = satz
     } else {
       aktuell = kombiniert
     }
@@ -58,6 +63,11 @@ export default function VorleseButton({
   const tempoRef = useRef(tempo)
   tempoRef.current = tempo
 
+  // Vorab-Ladung des ersten Textabschnitts, sobald die Seite angezeigt wird –
+  // während der Nutzer noch liest, läuft die erste Sprachanfrage schon im
+  // Hintergrund. Beim Klick auf "Vorlesen" ist sie damit oft schon fertig.
+  const vorabRef = useRef<{ geschlecht: string; chunkText: string; promise: Promise<string> } | null>(null)
+
   async function holAudio(chunk: string, signal: AbortSignal): Promise<string> {
     const response = await authFetch("/api/vorlesen", {
       method: "POST",
@@ -69,6 +79,18 @@ export default function VorleseButton({
     if (data.fehler) throw new Error(data.fehler)
     return data.audio as string
   }
+
+  useEffect(() => {
+    const chunks = textZuChunks(text)
+    if (chunks.length === 0) return
+    const ersterChunk = chunks[0]
+    const controller = new AbortController()
+    const promise = holAudio(ersterChunk, controller.signal)
+    promise.catch(() => {}) // Fehler hier ignorieren – beim Abspielen wird nötigenfalls neu versucht
+    vorabRef.current = { geschlecht, chunkText: ersterChunk, promise }
+    return () => controller.abort()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, geschlecht])
 
   async function vorlesen() {
     setFehler("")
@@ -83,7 +105,16 @@ export default function VorleseButton({
 
     try {
       const chunks = textZuChunks(text)
-      const audioPromises = chunks.map((chunk) => holAudio(chunk, signal))
+
+      // Vorgeladenen ersten Chunk wiederverwenden, falls er zur aktuellen
+      // Stimme passt und noch aktuell ist – spart die komplette Wartezeit
+      const vorab = vorabRef.current
+      const vorabPasst =
+        vorab && vorab.chunkText === chunks[0] && vorab.geschlecht === geschlecht
+
+      const audioPromises = chunks.map((chunk, i) =>
+        i === 0 && vorabPasst ? vorab!.promise : holAudio(chunk, signal)
+      )
 
       dauernRef.current = new Array(chunks.length).fill(0)
       const audios: (HTMLAudioElement | null)[] = new Array(chunks.length).fill(null)

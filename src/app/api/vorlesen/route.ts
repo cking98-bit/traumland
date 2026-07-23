@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifiziereNutzer } from "@/lib/serverAuth"
-import { mitModellFallback } from "@/lib/geminiFallback"
+import { mitModellWettlauf } from "@/lib/geminiFallback"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
 
-// gemini-2.5-flash-preview-tts ist schneller, -pro als Fallback
+// Antwortzeiten von Gemini-TTS schwanken stark (in Tests: 3-12+ Sekunden
+// für ähnlich lange Texte, teils auch leere Antworten). Beide Modelle
+// gleichzeitig anfragen und das schnellste brauchbare Ergebnis nehmen
+// ist daher spürbar schneller als nacheinander zu probieren.
 const TTS_MODELLE = ["gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"]
 
 function pcmToWav(pcm: Buffer, sampleRate = 24000): Buffer {
@@ -46,7 +49,7 @@ export async function POST(request: NextRequest) {
 
     const voiceName = geschlecht === "männlich" ? "Puck" : "Kore"
 
-    const ergebnis = await mitModellFallback(TTS_MODELLE, async (modell, signal) => {
+    const ergebnis = await mitModellWettlauf(TTS_MODELLE, async (modell, signal) => {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${modell}:generateContent`,
         {
