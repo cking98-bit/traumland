@@ -4,25 +4,30 @@ import { useState, useRef, useEffect } from "react"
 import { useSprache } from "@/components/LanguageProvider"
 import { authFetch } from "@/lib/apiClient"
 
-// Der erste Abschnitt bleibt kurz, damit die erste Sprachausgabe
-// möglichst schnell steht – der Rest darf länger sein (spart API-Aufrufe),
-// weil dann schon Audio läuft und die restliche Generierung im Hintergrund
-// weiterlaufen kann.
-function textZuChunks(text: string, ersterMaxZeichen = 90, restMaxZeichen = 250): string[] {
-  const saetze = text.split(/(?<=[.!?…])\s+/).filter((s) => s.trim().length > 0)
+// Der Text wird satzweise in Abschnitte zerlegt. Die ersten beiden bleiben
+// kurz, damit die erste Sprachausgabe möglichst schnell steht; der Rest darf
+// länger sein (weniger API-Aufrufe), weil dann schon Audio läuft.
+function textZuChunks(text: string): string[] {
+  const saetze = text
+    .replace(/\s+/g, " ")
+    .split(/(?<=[.!?…])\s+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+
+  const grenzeFuer = (index: number) => (index === 0 ? 90 : index === 1 ? 140 : 260)
+
   const chunks: string[] = []
   let aktuell = ""
   for (const satz of saetze) {
-    const grenze = chunks.length === 0 ? ersterMaxZeichen : restMaxZeichen
     const kombiniert = aktuell ? aktuell + " " + satz : satz
-    if (aktuell && kombiniert.length > grenze) {
-      chunks.push(aktuell.trim())
+    if (aktuell && kombiniert.length > grenzeFuer(chunks.length)) {
+      chunks.push(aktuell)
       aktuell = satz
     } else {
       aktuell = kombiniert
     }
   }
-  if (aktuell.trim()) chunks.push(aktuell.trim())
+  if (aktuell) chunks.push(aktuell)
   return chunks.length > 0 ? chunks : [text]
 }
 
@@ -39,6 +44,8 @@ const TEMPOS = [
   { wert: 1.2, label: "1.2×" },
 ]
 
+const MAX_PARALLEL = 4
+
 export default function VorleseButton({
   text,
   titel,
@@ -52,6 +59,7 @@ export default function VorleseButton({
   const [laden, setLaden] = useState(false)
   const [spielt, setSpielt] = useState(false)
   const [pausiert, setPausiert] = useState(false)
+  const [puffert, setPuffert] = useState(false)
   const [tempo, setTempo] = useState(1.0)
   const [fehler, setFehler] = useState("")
   const [position, setPosition] = useState(0)
@@ -63,39 +71,137 @@ export default function VorleseButton({
   const tempoRef = useRef(tempo)
   tempoRef.current = tempo
 
-  // Vorab-Ladung des ersten Textabschnitts, sobald die Seite angezeigt wird –
-  // während der Nutzer noch liest, läuft die erste Sprachanfrage schon im
-  // Hintergrund. Beim Klick auf "Vorlesen" ist sie damit oft schon fertig.
-  const vorabRef = useRef<{ geschlecht: string; chunkText: string; promise: Promise<string> } | null>(null)
+  // Vorab-Ladung des ersten Abschnitts, sobald die Seite angezeigt wird –
+  // beim Klick auf "Vorlesen" ist er dann oft schon fertig.
+  const vorabRef = useRef<{
+    geschlecht: string
+    chunkText: string
+    promise: Promise<string | null>
+  } | null>(null)
 
-  async function holAudio(chunk: string, signal: AbortSignal): Promise<string> {
-    const response = await authFetch("/api/vorlesen", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: chunk, geschlecht }),
-      signal,
-    })
-    const data = await response.json()
-    if (data.fehler) throw new Error(data.fehler)
-    return data.audio as string
+  // Eine TTS-Anfrage mit kurzer Wiederholung – gibt null zurück statt zu werfen,
+  // damit ein fehlgeschlagener Abschnitt die Wiedergabe nie komplett stoppt.
+  async function holAudio(
+    chunk: string,
+    stimme: string,
+    signal: AbortSignal,
+    schnell = false,
+    versuche = 2
+  ): Promise<string | null> {
+    for (let v = 0; v < versuche; v++) {
+      if (signal.aborted) return null
+      try {
+        const response = await authFetch("/api/vorlesen", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: chunk, geschlecht: stimme, schnell }),
+          signal,
+        })
+        const data = await response.json()
+        if (data.audio) return data.audio as string
+      } catch (err) {
+        if ((err as { name?: string })?.name === "AbortError" || signal.aborted) {
+          return null
+        }
+      }
+    }
+    return null
   }
 
   useEffect(() => {
     const chunks = textZuChunks(text)
     if (chunks.length === 0) return
-    const ersterChunk = chunks[0]
     const controller = new AbortController()
-    const promise = holAudio(ersterChunk, controller.signal)
-    promise.catch(() => {}) // Fehler hier ignorieren – beim Abspielen wird nötigenfalls neu versucht
-    vorabRef.current = { geschlecht, chunkText: ersterChunk, promise }
+    const promise = holAudio(chunks[0], geschlecht, controller.signal, true)
+    promise.catch(() => {})
+    vorabRef.current = { geschlecht, chunkText: chunks[0], promise }
     return () => controller.abort()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, geschlecht])
+
+  // Alle Abschnitte parallel generieren – aber mit begrenzter Gleichzeitigkeit,
+  // damit wir die API nicht überlasten. Früheste Abschnitte zuerst.
+  function generiereAlle(
+    chunks: string[],
+    stimme: string,
+    signal: AbortSignal,
+    vorbelegt: { promise: Promise<string | null> } | null
+  ): Promise<string | null>[] {
+    const resolver: ((v: string | null) => void)[] = []
+    const promises = chunks.map(
+      (_, i) => new Promise<string | null>((res) => (resolver[i] = res))
+    )
+
+    let naechster = 0
+    if (vorbelegt) {
+      vorbelegt.promise.then((v) => resolver[0](v)).catch(() => resolver[0](null))
+      naechster = 1
+    }
+
+    async function worker() {
+      while (!signal.aborted) {
+        const i = naechster++
+        if (i >= chunks.length) return
+        const audio = await holAudio(chunks[i], stimme, signal, false)
+        resolver[i](audio)
+      }
+    }
+    const anzahl = Math.min(MAX_PARALLEL, chunks.length)
+    for (let w = 0; w < anzahl; w++) worker()
+
+    return promises
+  }
+
+  // Einen fertigen Audio-Abschnitt abspielen. Löst true auf, wenn er zu Ende
+  // gespielt (oder wegen Fehler übersprungen) wurde – false bei Abbruch.
+  function spieleEinen(url: string, idx: number, signal: AbortSignal): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (signal.aborted) return resolve(false)
+
+      const audio = new Audio(url)
+      audio.playbackRate = tempoRef.current
+      audioRef.current = audio
+
+      let erledigt = false
+      const abschluss = (weiter: boolean) => {
+        if (!erledigt) {
+          erledigt = true
+          resolve(weiter)
+        }
+      }
+
+      audio.onloadedmetadata = () => {
+        if (isFinite(audio.duration) && audio.duration > 0) {
+          dauernRef.current[idx] = audio.duration
+          setGesamt(dauernRef.current.reduce((s, d) => s + (d || 0), 0))
+        }
+      }
+      audio.ontimeupdate = () => {
+        const vorher = dauernRef.current
+          .slice(0, idx)
+          .reduce((s, d) => s + (d || 0), 0)
+        setPosition(vorher + audio.currentTime)
+      }
+      audio.onended = () => abschluss(true)
+      audio.onerror = () => abschluss(true) // Abschnitt überspringen, nicht steckenbleiben
+
+      audio.play().catch(() => abschluss(true))
+      signal.addEventListener(
+        "abort",
+        () => {
+          audio.pause()
+          abschluss(false)
+        },
+        { once: true }
+      )
+    })
+  }
 
   async function vorlesen() {
     setFehler("")
     setLaden(true)
     setPausiert(false)
+    setPuffert(false)
     setPosition(0)
     setGesamt(0)
 
@@ -103,97 +209,68 @@ export default function VorleseButton({
     abbrechenRef.current = controller
     const { signal } = controller
 
-    try {
-      const chunks = textZuChunks(text)
+    const chunks = textZuChunks(text)
+    dauernRef.current = new Array(chunks.length).fill(0)
 
-      // Vorgeladenen ersten Chunk wiederverwenden, falls er zur aktuellen
-      // Stimme passt und noch aktuell ist – spart die komplette Wartezeit
-      const vorab = vorabRef.current
-      const vorabPasst =
-        vorab && vorab.chunkText === chunks[0] && vorab.geschlecht === geschlecht
+    // Vorgeladenen ersten Abschnitt wiederverwenden, falls Stimme passt
+    const vorab = vorabRef.current
+    const vorbelegt =
+      vorab && vorab.chunkText === chunks[0] && vorab.geschlecht === geschlecht
+        ? { promise: vorab.promise }
+        : null
 
-      const audioPromises = chunks.map((chunk, i) =>
-        i === 0 && vorabPasst ? vorab!.promise : holAudio(chunk, signal)
-      )
+    const promises = generiereAlle(chunks, geschlecht, signal, vorbelegt)
 
-      dauernRef.current = new Array(chunks.length).fill(0)
-      const audios: (HTMLAudioElement | null)[] = new Array(chunks.length).fill(null)
-
-      // Sobald ein Chunk fertig ist: Audio vorbereiten und Dauer erfassen
-      audioPromises.forEach((p, i) => {
-        p.then((url) => {
-          if (signal.aborted) return
-          const a = new Audio(url)
-          a.preload = "metadata"
-          a.onloadedmetadata = () => {
+    // Gesamtdauer vorab schätzen, sobald Abschnitte eintreffen
+    promises.forEach((p, i) => {
+      p.then((url) => {
+        if (!url || signal.aborted || dauernRef.current[i]) return
+        const a = new Audio(url)
+        a.preload = "metadata"
+        a.onloadedmetadata = () => {
+          if (isFinite(a.duration) && a.duration > 0) {
             dauernRef.current[i] = a.duration
-            setGesamt(dauernRef.current.reduce((summe, d) => summe + (d || 0), 0))
+            setGesamt(dauernRef.current.reduce((s, d) => s + (d || 0), 0))
           }
-          audios[i] = a
-        }).catch(() => {})
-      })
+        }
+      }).catch(() => {})
+    })
 
-      // Warten bis der erste Chunk bereit ist – dann sofort starten
-      const ersteUrl = await audioPromises[0]
+    let hatGespielt = false
+    let i = 0
+    while (i < chunks.length && !signal.aborted) {
+      // Warten bis der nächste Abschnitt fertig generiert ist
+      if (hatGespielt) setPuffert(true)
+      const url = await promises[i]
       if (signal.aborted) return
+      setPuffert(false)
 
-      setLaden(false)
-      setSpielt(true)
-
-      async function spieleIndex(idx: number) {
-        if (signal.aborted) return
-
-        const url = idx === 0 ? ersteUrl : await audioPromises[idx]
-        if (signal.aborted) return
-
-        if (audioRef.current) audioRef.current.pause()
-
-        let audio = audios[idx]
-        if (!audio) {
-          audio = new Audio(url)
-          audios[idx] = audio
-        }
-        audio.currentTime = 0
-        audio.playbackRate = tempoRef.current
-        audioRef.current = audio
-
-        audio.ontimeupdate = () => {
-          const vorher = dauernRef.current
-            .slice(0, idx)
-            .reduce((summe, d) => summe + (d || 0), 0)
-          setPosition(vorher + audio!.currentTime)
-        }
-
-        audio.onended = () => {
-          if (idx + 1 < chunks.length) {
-            spieleIndex(idx + 1)
-          } else {
-            setSpielt(false)
-            setPausiert(false)
-            setPosition(0)
-          }
-        }
-
-        audio.onerror = () => {
-          if (!signal.aborted) {
-            setFehler(t("vorlese.fehler.audio"))
-            setSpielt(false)
-          }
-        }
-
-        await audio.play().catch(() => {
-          if (!signal.aborted) {
-            setFehler(t("vorlese.fehler.audio"))
-            setSpielt(false)
-          }
-        })
+      if (!url) {
+        i++ // fehlgeschlagenen Abschnitt überspringen
+        continue
       }
 
-      spieleIndex(0)
-    } catch (err: unknown) {
-      if ((err as { name?: string })?.name === "AbortError") return
+      if (!hatGespielt) {
+        hatGespielt = true
+        setLaden(false)
+        setSpielt(true)
+      }
+
+      const weiter = await spieleEinen(url, i, signal)
+      if (signal.aborted || !weiter) return
+      i++
+    }
+
+    if (!hatGespielt && !signal.aborted) {
       setFehler(t("vorlese.fehler.verbindung"))
       setLaden(false)
+      return
+    }
+    if (!signal.aborted) {
+      setSpielt(false)
+      setPausiert(false)
+      setPuffert(false)
+      setPosition(0)
     }
   }
 
@@ -223,6 +300,7 @@ export default function VorleseButton({
     }
     setSpielt(false)
     setPausiert(false)
+    setPuffert(false)
     setLaden(false)
     setPosition(0)
     setGesamt(0)
@@ -312,6 +390,8 @@ export default function VorleseButton({
           <span className="text-indigo-400 text-xs">
             {laden
               ? t("vorlese.erzeugt")
+              : puffert
+              ? t("vorlese.puffert")
               : `${formatZeit(position)} / ${formatZeit(gesamt)}`}
           </span>
 

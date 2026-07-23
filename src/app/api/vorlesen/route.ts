@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifiziereNutzer } from "@/lib/serverAuth"
-import { mitModellWettlauf } from "@/lib/geminiFallback"
+import { mitModellWettlauf, mitModellFallback } from "@/lib/geminiFallback"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
 
 // Antwortzeiten von Gemini-TTS schwanken stark (in Tests: 3-12+ Sekunden
-// für ähnlich lange Texte, teils auch leere Antworten). Beide Modelle
-// gleichzeitig anfragen und das schnellste brauchbare Ergebnis nehmen
-// ist daher spürbar schneller als nacheinander zu probieren.
+// für ähnlich lange Texte, teils auch leere Antworten).
 const TTS_MODELLE = ["gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"]
 
 function pcmToWav(pcm: Buffer, sampleRate = 24000): Buffer {
@@ -41,7 +39,7 @@ export async function POST(request: NextRequest) {
     const uid = await verifiziereNutzer(request)
     if (!uid) return NextResponse.json({ fehler: "Nicht angemeldet" }, { status: 401 })
 
-    const { text, geschlecht } = await request.json()
+    const { text, geschlecht, schnell } = await request.json()
 
     if (!text?.trim()) {
       return NextResponse.json({ fehler: "Kein Text" }, { status: 400 })
@@ -49,7 +47,12 @@ export async function POST(request: NextRequest) {
 
     const voiceName = geschlecht === "männlich" ? "Puck" : "Kore"
 
-    const ergebnis = await mitModellWettlauf(TTS_MODELLE, async (modell, signal) => {
+    // Erster Abschnitt (schnell=true): beide Modelle gleichzeitig anfragen,
+    // schnellstes Ergebnis nehmen – dort zählt jede Sekunde für den Start.
+    // Restliche Abschnitte: nacheinander (spart die Hälfte der API-Kosten),
+    // weil dann bereits Audio läuft und die Wartezeit verdeckt wird.
+    const strategie = schnell ? mitModellWettlauf : mitModellFallback
+    const ergebnis = await strategie(TTS_MODELLE, async (modell, signal) => {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${modell}:generateContent`,
         {
