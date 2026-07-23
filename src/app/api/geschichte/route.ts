@@ -3,9 +3,15 @@ import { adminDb } from "@/lib/firebaseAdmin"
 import { FieldValue } from "firebase-admin/firestore"
 import { holeKontingent } from "@/lib/kontingent"
 import { verifiziereNutzer } from "@/lib/serverAuth"
+import { mitModellFallback } from "@/lib/geminiFallback"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
+
+// Reihenfolge nach Geschwindigkeit/Verlässlichkeit getestet (Stand: Juli 2026).
+// Modelle werden von Google ohne Vorwarnung abgeschaltet oder ändern ihre
+// Parameter-Anforderungen – deshalb mehrere Kandidaten statt eines einzigen.
+const TEXT_MODELLE = ["gemini-flash-latest", "gemini-flash-lite-latest", "gemini-pro-latest"]
 
 export async function POST(request: NextRequest) {
   try {
@@ -114,36 +120,46 @@ Schreibe eine Gute-Nacht-Geschichte auf Deutsch mit folgenden Vorgaben:
 Beginne deine Antwort mit einer einzigen Zeile "TITEL: <ein kurzer, magischer Titel für die Geschichte>".
 Danach schreibe NUR die Geschichte, ohne weitere Einleitung.`
 
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": process.env.GEMINI_API_KEY!,
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.9,
-            maxOutputTokens: 4096,
-            thinkingConfig: { thinkingBudget: 0 },
+    const ergebnis = await mitModellFallback(TEXT_MODELLE, async (modell, signal) => {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${modell}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": process.env.GEMINI_API_KEY!,
           },
-        }),
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.9,
+              maxOutputTokens: 4096,
+            },
+          }),
+          signal,
+        }
+      )
+      const data = await response.json()
+      const text: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text
+      if (!text) {
+        console.error(
+          `Modell "${modell}" lieferte keine Geschichte. HTTP ${response.status}:`,
+          JSON.stringify(data).slice(0, 300)
+        )
+        return null
       }
-    )
+      return text
+    })
 
-    const data = await response.json()
-
-    const rohtext: string | undefined = data.candidates?.[0]?.content?.parts?.[0]?.text
-
-    if (!rohtext) {
-      console.error("Keine Geschichte. Antwort:", JSON.stringify(data).slice(0, 300))
+    if (!ergebnis) {
+      console.error("Alle Text-Modelle fehlgeschlagen:", TEXT_MODELLE.join(", "))
       return NextResponse.json(
         { fehler: "Keine Geschichte generiert" },
         { status: 500 }
       )
     }
+
+    const rohtext = ergebnis.daten
 
     // Titel aus der ersten Zeile ziehen
     let titel = ""

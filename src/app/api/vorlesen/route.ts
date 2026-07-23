@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifiziereNutzer } from "@/lib/serverAuth"
+import { mitModellFallback } from "@/lib/geminiFallback"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
+
+// gemini-2.5-flash-preview-tts ist schneller, -pro als Fallback
+const TTS_MODELLE = ["gemini-2.5-flash-preview-tts", "gemini-2.5-pro-preview-tts"]
 
 function pcmToWav(pcm: Buffer, sampleRate = 24000): Buffer {
   const numChannels = 1
@@ -42,37 +46,45 @@ export async function POST(request: NextRequest) {
 
     const voiceName = geschlecht === "männlich" ? "Puck" : "Kore"
 
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": process.env.GEMINI_API_KEY!,
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text }] }],
-          generationConfig: {
-            responseModalities: ["AUDIO"],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName },
+    const ergebnis = await mitModellFallback(TTS_MODELLE, async (modell, signal) => {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${modell}:generateContent`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": process.env.GEMINI_API_KEY!,
+          },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text }] }],
+            generationConfig: {
+              responseModalities: ["AUDIO"],
+              speechConfig: {
+                voiceConfig: { prebuiltVoiceConfig: { voiceName } },
               },
             },
-          },
-        }),
+          }),
+          signal,
+        }
+      )
+      const data = await response.json()
+      const base64Pcm = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data
+      if (!base64Pcm) {
+        console.error(
+          `Modell "${modell}" lieferte keine Audio-Antwort. HTTP ${response.status}:`,
+          JSON.stringify(data).slice(0, 300)
+        )
+        return null
       }
-    )
+      return base64Pcm as string
+    })
 
-    const data = await response.json()
-    const base64Pcm = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data
-
-    if (!base64Pcm) {
-      console.error("Keine Audio-Antwort. HTTP:", response.status, JSON.stringify(data).slice(0, 300))
+    if (!ergebnis) {
+      console.error("Alle TTS-Modelle fehlgeschlagen:", TTS_MODELLE.join(", "))
       return NextResponse.json({ fehler: "Audio konnte nicht erzeugt werden" }, { status: 500 })
     }
 
-    const pcm = Buffer.from(base64Pcm, "base64")
+    const pcm = Buffer.from(ergebnis.daten, "base64")
     const wav = pcmToWav(pcm)
     const wavBase64 = wav.toString("base64")
 
