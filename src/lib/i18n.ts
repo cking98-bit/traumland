@@ -227,6 +227,10 @@ export const texte: Record<Sprache, Dict> = {
     "abo.kinder": "Gebuchte Kinder",
     "abo.jahrHinweis": "Jahrestarif – nur kündbar, kein Planwechsel möglich.",
     "abo.kuendigenFehler": "Kündigung fehlgeschlagen. Bitte versuche es erneut.",
+    "abo.reaktivieren": "Abo reaktivieren",
+    "abo.reaktivierenHinweis": "Dein Abo läuft aus, wurde aber noch nicht beendet. Bis zum {datum} kannst du es reaktivieren – danach musst du einen neuen Tarif abschließen.",
+    "abo.reaktiviert": "Dein Abo wurde reaktiviert und läuft normal weiter.",
+    "abo.reaktivierenFehler": "Reaktivierung fehlgeschlagen. Falls die Laufzeit bereits abgelaufen ist, schließe bitte einen neuen Tarif ab.",
 
     // Cookie
     "cookie.text": "Wir verwenden technisch notwendige Cookies für die Anmeldung sowie lokale Speicherung für deine Profile und Geschichten.",
@@ -572,6 +576,10 @@ export const texte: Record<Sprache, Dict> = {
     "abo.kinder": "Booked children",
     "abo.jahrHinweis": "Yearly plan – cancellation only, no plan change possible.",
     "abo.kuendigenFehler": "Cancellation failed. Please try again.",
+    "abo.reaktivieren": "Reactivate subscription",
+    "abo.reaktivierenHinweis": "Your subscription is set to end but hasn't been cancelled yet. You can reactivate it until {datum} – after that you'll need to sign up for a new plan.",
+    "abo.reaktiviert": "Your subscription has been reactivated and continues as normal.",
+    "abo.reaktivierenFehler": "Reactivation failed. If the term has already ended, please sign up for a new plan.",
 
     // Cookie
     "cookie.text": "We use technically necessary cookies for login and local storage for your profiles and stories.",

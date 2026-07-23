@@ -23,6 +23,7 @@ type AboDetails = {
   nextBilling: number | null
   periodStart: number | null
   cancelAtPeriodEnd: boolean
+  subscriptionStatus: string | null
 }
 
 export default function AboPage() {
@@ -37,6 +38,7 @@ export default function AboPage() {
   const [erfolg, setErfolg] = useState("")
   const [kuendigenFehler, setKuendigenFehler] = useState("")
   const [widerrufLaedt, setWiderrufLaedt] = useState(false)
+  const [reaktivierenLaedt, setReaktivierenLaedt] = useState(false)
 
   useEffect(() => {
     // Warten bis Auth fertig geladen
@@ -95,6 +97,27 @@ export default function AboPage() {
     }
   }
 
+  async function reaktivieren() {
+    if (!nutzer) return
+    setReaktivierenLaedt(true)
+    setErfolg("")
+    setFehler("")
+    try {
+      const res = await authFetch("/api/abo/reaktivieren", { method: "POST" })
+      const data = await res.json()
+      if (!data.ok) throw new Error()
+      setErfolg(t("abo.reaktiviert"))
+      await aboNeuLaden()
+      const r2 = await authFetch(`/api/abo/details`)
+      const d2 = await r2.json()
+      if (!d2.fehler) setDetails(d2)
+    } catch {
+      setFehler(t("abo.reaktivierenFehler"))
+    } finally {
+      setReaktivierenLaedt(false)
+    }
+  }
+
   async function wechselWiderrufen() {
     if (!nutzer) return
     setWiderrufLaedt(true)
@@ -150,6 +173,9 @@ export default function AboPage() {
 
   const wirdGekuendigt = details?.cancelAtPeriodEnd || details?.abo.wird_gekuendigt
   const naechster = details?.abo.naechster_plan
+  // Reaktivierung nur möglich, solange Stripe die Subscription noch aktiv führt
+  // (also bis zum Laufzeitende) – danach ist sie final gekündigt
+  const kannReaktivieren = wirdGekuendigt && details?.subscriptionStatus === "active"
 
   return (
     <SchutzRoute>
@@ -243,6 +269,22 @@ export default function AboPage() {
                 </span>
               </div>
             </div>
+
+            {/* Reaktivierung: solange die Kündigung noch nicht wirksam wurde */}
+            {kannReaktivieren && (
+              <div className="bg-indigo-900 border border-green-500/30 rounded-2xl p-6 flex flex-col gap-3">
+                <p className="text-indigo-200 text-sm">
+                  {t("abo.reaktivierenHinweis").replace("{datum}", nextBillingFormatted)}
+                </p>
+                <button
+                  onClick={reaktivieren}
+                  disabled={reaktivierenLaedt}
+                  className="bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 text-indigo-950 font-bold px-5 py-3 rounded-xl transition"
+                >
+                  {reaktivierenLaedt ? "…" : t("abo.reaktivieren")}
+                </button>
+              </div>
+            )}
 
             {/* Nächster Plan (bei anstehendem Tarifwechsel) */}
             {naechster && (

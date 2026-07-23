@@ -24,6 +24,10 @@ export default function DemoPlayer({ src }: { src: string }) {
     setDauer(0)
   }, [src])
 
+  function dauerAktualisieren(neu: number) {
+    if (isFinite(neu) && neu > 0) setDauer(neu)
+  }
+
   function abspielenWechseln() {
     const audio = audioRef.current
     if (!audio) return
@@ -31,6 +35,9 @@ export default function DemoPlayer({ src }: { src: string }) {
       audio.pause()
       setSpielt(false)
     } else {
+      // Gesamtdauer nachholen, falls sie (z.B. auf iOS) vor dem ersten
+      // Abspielen noch nicht geladen war
+      dauerAktualisieren(audio.duration)
       audio.play().catch(() => {})
       setSpielt(true)
     }
@@ -53,8 +60,10 @@ export default function DemoPlayer({ src }: { src: string }) {
       <audio
         ref={audioRef}
         src={src}
-        preload="metadata"
-        onLoadedMetadata={(e) => setDauer(e.currentTarget.duration)}
+        preload="auto"
+        onLoadedMetadata={(e) => dauerAktualisieren(e.currentTarget.duration)}
+        onDurationChange={(e) => dauerAktualisieren(e.currentTarget.duration)}
+        onCanPlay={(e) => dauerAktualisieren(e.currentTarget.duration)}
         onTimeUpdate={(e) => setPosition(e.currentTarget.currentTime)}
         onEnded={() => {
           setSpielt(false)
@@ -82,8 +91,18 @@ export default function DemoPlayer({ src }: { src: string }) {
       <div
         ref={balkenRef}
         onClick={spulen}
-        className="flex-1 py-2 cursor-pointer"
+        className="flex-1 py-2 cursor-pointer relative"
       >
+        {/* Mitlaufende Zeit-Anzeige direkt über dem Regler-Punkt, während gespielt wird */}
+        {spielt && dauer > 0 && (
+          <div
+            className="absolute -top-6 -translate-x-1/2 text-[10px] leading-none text-indigo-100 bg-indigo-900 px-1.5 py-1 rounded whitespace-nowrap"
+            style={{ left: `${fortschritt}%` }}
+          >
+            {formatZeit(position)}
+          </div>
+        )}
+
         <div className="h-1.5 rounded-full bg-indigo-800 relative">
           <div
             className="h-1.5 rounded-full bg-yellow-400"

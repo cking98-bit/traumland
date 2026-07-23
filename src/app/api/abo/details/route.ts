@@ -59,6 +59,7 @@ export async function GET(req: NextRequest) {
         nextBilling: periodEnd,
         periodStart,
         cancelAtPeriodEnd: s.cancel_at_period_end ?? false,
+        subscriptionStatus: s.status ?? null,
       })
     } catch (stripeErr) {
       console.error("Stripe retrieve error:", stripeErr)
@@ -67,6 +68,7 @@ export async function GET(req: NextRequest) {
         nextBilling: null,
         periodStart: null,
         cancelAtPeriodEnd: false,
+        subscriptionStatus: null,
       })
     }
   } catch (err) {
