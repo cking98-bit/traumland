@@ -134,7 +134,14 @@ export default function VorleseButton({
 
     let naechster = 0
     if (vorbelegt) {
-      vorbelegt.promise.then((v) => resolver[0](v)).catch(() => resolver[0](null))
+      // Vorgeladenes Audio nutzen – schlug es fehl, ersten Abschnitt neu
+      // generieren statt ihn zu überspringen (sonst fehlt der erste Satz).
+      vorbelegt.promise
+        .then(async (v) => {
+          if (v || signal.aborted) resolver[0](v)
+          else resolver[0](await holAudio(chunks[0], stimme, signal, true))
+        })
+        .catch(() => resolver[0](null))
       naechster = 1
     }
 
