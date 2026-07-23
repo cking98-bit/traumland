@@ -1,19 +1,74 @@
 @import "tailwindcss";
 
-/* Nachthimmel: sanfter Verlauf oben + wenige feine, statische Sterne */
+/* Nachthimmel: sanfter Verlauf + zwei Ebenen aus Sternen (fein + Akzent-Glanzsterne) */
 body {
   background-color: #1e1b4b;
   background-image:
     radial-gradient(ellipse 90% 40% at 50% -5%, rgba(99, 102, 241, 0.22), transparent),
-    radial-gradient(1.5px 1.5px at 12% 8%, rgba(255, 255, 255, 0.45), transparent),
-    radial-gradient(1px 1px at 28% 4%, rgba(255, 255, 255, 0.3), transparent),
-    radial-gradient(2px 2px at 45% 10%, rgba(250, 204, 21, 0.35), transparent),
-    radial-gradient(1px 1px at 63% 5%, rgba(255, 255, 255, 0.35), transparent),
-    radial-gradient(1.5px 1.5px at 78% 9%, rgba(255, 255, 255, 0.4), transparent),
-    radial-gradient(1px 1px at 90% 3%, rgba(255, 255, 255, 0.28), transparent),
-    radial-gradient(1px 1px at 35% 18%, rgba(255, 255, 255, 0.2), transparent),
-    radial-gradient(1.5px 1.5px at 85% 16%, rgba(255, 255, 255, 0.22), transparent);
+    /* feine Hintergrund-Sterne, über die ganze Fläche verteilt */
+    radial-gradient(0.8px 0.8px at 6% 8%, rgba(255, 255, 255, 0.25), transparent),
+    radial-gradient(0.8px 0.8px at 18% 22%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 31% 5%, rgba(255, 255, 255, 0.22), transparent),
+    radial-gradient(0.8px 0.8px at 44% 28%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 58% 12%, rgba(255, 255, 255, 0.25), transparent),
+    radial-gradient(0.8px 0.8px at 71% 24%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 84% 9%, rgba(255, 255, 255, 0.22), transparent),
+    radial-gradient(0.8px 0.8px at 95% 30%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 11% 38%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 26% 45%, rgba(255, 255, 255, 0.22), transparent),
+    radial-gradient(0.8px 0.8px at 39% 52%, rgba(255, 255, 255, 0.18), transparent),
+    radial-gradient(0.8px 0.8px at 52% 42%, rgba(255, 255, 255, 0.22), transparent),
+    radial-gradient(0.8px 0.8px at 65% 48%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 78% 55%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 90% 44%, rgba(255, 255, 255, 0.22), transparent),
+    radial-gradient(0.8px 0.8px at 8% 62%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 22% 70%, rgba(255, 255, 255, 0.18), transparent),
+    radial-gradient(0.8px 0.8px at 36% 66%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 49% 72%, rgba(255, 255, 255, 0.22), transparent),
+    radial-gradient(0.8px 0.8px at 63% 68%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 76% 78%, rgba(255, 255, 255, 0.18), transparent),
+    radial-gradient(0.8px 0.8px at 88% 65%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 14% 85%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 29% 90%, rgba(255, 255, 255, 0.18), transparent),
+    radial-gradient(0.8px 0.8px at 45% 84%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 60% 92%, rgba(255, 255, 255, 0.18), transparent),
+    radial-gradient(0.8px 0.8px at 72% 88%, rgba(255, 255, 255, 0.2), transparent),
+    radial-gradient(0.8px 0.8px at 85% 95%, rgba(255, 255, 255, 0.18), transparent),
+    /* etwas größere, hellere Sterne dazwischen */
+    radial-gradient(1.5px 1.5px at 15% 15%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 66% 20%, rgba(255, 255, 255, 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 33% 58%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1.5px 1.5px at 80% 62%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1.5px 1.5px at 20% 80%, rgba(255, 255, 255, 0.35), transparent),
+    radial-gradient(1.5px 1.5px at 55% 88%, rgba(255, 255, 255, 0.35), transparent);
   background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+/* Zwei Akzent-Sterne mit leichtem Leuchten – fixiert, damit sie beim Scrollen sichtbar bleiben */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+body::before {
+  top: 18%;
+  left: 12%;
+  background: #facc15;
+  box-shadow: 0 0 10px 3px rgba(250, 204, 21, 0.5);
+}
+
+body::after {
+  top: 55%;
+  right: 10%;
+  background: #ffffff;
+  box-shadow: 0 0 8px 3px rgba(255, 255, 255, 0.4);
 }
 
 /* Überschriften: runde, warme Schrift (Nunito) – Fließtext bleibt Inter */
