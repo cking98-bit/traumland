@@ -31,13 +31,6 @@ function textZuChunks(text: string): string[] {
   return chunks.length > 0 ? chunks : [text]
 }
 
-function formatZeit(sekunden: number): string {
-  if (!isFinite(sekunden) || sekunden < 0) return "0:00"
-  const m = Math.floor(sekunden / 60)
-  const s = Math.floor(sekunden % 60)
-  return `${m}:${String(s).padStart(2, "0")}`
-}
-
 const TEMPOS = [
   { wert: 0.8, label: "0.8×" },
   { wert: 1.0, label: "1×" },
@@ -62,12 +55,9 @@ export default function VorleseButton({
   const [puffert, setPuffert] = useState(false)
   const [tempo, setTempo] = useState(1.0)
   const [fehler, setFehler] = useState("")
-  const [position, setPosition] = useState(0)
-  const [gesamt, setGesamt] = useState(0)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const abbrechenRef = useRef<AbortController | null>(null)
-  const dauernRef = useRef<number[]>([])
   const tempoRef = useRef(tempo)
   tempoRef.current = tempo
 
@@ -161,7 +151,7 @@ export default function VorleseButton({
 
   // Einen fertigen Audio-Abschnitt abspielen. Löst true auf, wenn er zu Ende
   // gespielt (oder wegen Fehler übersprungen) wurde – false bei Abbruch.
-  function spieleEinen(url: string, idx: number, signal: AbortSignal): Promise<boolean> {
+  function spieleEinen(url: string, signal: AbortSignal): Promise<boolean> {
     return new Promise((resolve) => {
       if (signal.aborted) return resolve(false)
 
@@ -177,18 +167,6 @@ export default function VorleseButton({
         }
       }
 
-      audio.onloadedmetadata = () => {
-        if (isFinite(audio.duration) && audio.duration > 0) {
-          dauernRef.current[idx] = audio.duration
-          setGesamt(dauernRef.current.reduce((s, d) => s + (d || 0), 0))
-        }
-      }
-      audio.ontimeupdate = () => {
-        const vorher = dauernRef.current
-          .slice(0, idx)
-          .reduce((s, d) => s + (d || 0), 0)
-        setPosition(vorher + audio.currentTime)
-      }
       audio.onended = () => abschluss(true)
       audio.onerror = () => abschluss(true) // Abschnitt überspringen, nicht steckenbleiben
 
@@ -209,15 +187,12 @@ export default function VorleseButton({
     setLaden(true)
     setPausiert(false)
     setPuffert(false)
-    setPosition(0)
-    setGesamt(0)
 
     const controller = new AbortController()
     abbrechenRef.current = controller
     const { signal } = controller
 
     const chunks = textZuChunks(text)
-    dauernRef.current = new Array(chunks.length).fill(0)
 
     // Vorgeladenen ersten Abschnitt wiederverwenden, falls Stimme passt
     const vorab = vorabRef.current
@@ -228,25 +203,9 @@ export default function VorleseButton({
 
     const promises = generiereAlle(chunks, geschlecht, signal, vorbelegt)
 
-    // Gesamtdauer vorab schätzen, sobald Abschnitte eintreffen
-    promises.forEach((p, i) => {
-      p.then((url) => {
-        if (!url || signal.aborted || dauernRef.current[i]) return
-        const a = new Audio(url)
-        a.preload = "metadata"
-        a.onloadedmetadata = () => {
-          if (isFinite(a.duration) && a.duration > 0) {
-            dauernRef.current[i] = a.duration
-            setGesamt(dauernRef.current.reduce((s, d) => s + (d || 0), 0))
-          }
-        }
-      }).catch(() => {})
-    })
-
     let hatGespielt = false
     let i = 0
     while (i < chunks.length && !signal.aborted) {
-      // Warten bis der nächste Abschnitt fertig generiert ist
       if (hatGespielt) setPuffert(true)
       const url = await promises[i]
       if (signal.aborted) return
@@ -263,7 +222,7 @@ export default function VorleseButton({
         setSpielt(true)
       }
 
-      const weiter = await spieleEinen(url, i, signal)
+      const weiter = await spieleEinen(url, signal)
       if (signal.aborted || !weiter) return
       i++
     }
@@ -277,7 +236,6 @@ export default function VorleseButton({
       setSpielt(false)
       setPausiert(false)
       setPuffert(false)
-      setPosition(0)
     }
   }
 
@@ -309,8 +267,6 @@ export default function VorleseButton({
     setPausiert(false)
     setPuffert(false)
     setLaden(false)
-    setPosition(0)
-    setGesamt(0)
   }
 
   function hauptKlick() {
@@ -323,7 +279,6 @@ export default function VorleseButton({
     }
   }
 
-  const fortschritt = gesamt > 0 ? Math.min(100, (position / gesamt) * 100) : 0
   const zeigtPause = spielt && !pausiert
 
   return (
@@ -358,77 +313,70 @@ export default function VorleseButton({
         </button>
       </div>
 
-      {/* Player (Variante B) */}
-      <div className="bg-indigo-900 rounded-xl p-4">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={hauptKlick}
-            aria-label={laden ? t("vorlese.stoppen") : zeigtPause ? t("vorlese.pause") : t("vorlese.vorlesen")}
-            className="w-12 h-12 min-w-12 rounded-full bg-yellow-400 hover:bg-yellow-300 flex items-center justify-center transition"
-          >
-            {laden ? (
-              <span className="w-5 h-5 border-2 border-indigo-950 border-t-transparent rounded-full animate-spin" />
-            ) : zeigtPause ? (
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#1e1b4b">
-                <rect x="6" y="5" width="4" height="14" rx="1" />
-                <rect x="14" y="5" width="4" height="14" rx="1" />
-              </svg>
-            ) : (
-              <svg className="w-5 h-5 ml-0.5" viewBox="0 0 24 24" fill="#1e1b4b">
-                <path d="M8 5.5v13a1 1 0 0 0 1.5.87l11-6.5a1 1 0 0 0 0-1.74l-11-6.5A1 1 0 0 0 8 5.5z" />
-              </svg>
-            )}
-          </button>
+      {/* Player – nur Steuerung, ohne Fortschrittsanzeige */}
+      <div className="bg-indigo-900 rounded-xl p-4 flex items-center gap-4">
+        <button
+          onClick={hauptKlick}
+          aria-label={laden ? t("vorlese.stoppen") : zeigtPause ? t("vorlese.pause") : t("vorlese.vorlesen")}
+          className="w-12 h-12 min-w-12 rounded-full bg-yellow-400 hover:bg-yellow-300 flex items-center justify-center transition"
+        >
+          {laden ? (
+            <span className="w-5 h-5 border-2 border-indigo-950 border-t-transparent rounded-full animate-spin" />
+          ) : zeigtPause ? (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#1e1b4b">
+              <rect x="6" y="5" width="4" height="14" rx="1" />
+              <rect x="14" y="5" width="4" height="14" rx="1" />
+            </svg>
+          ) : (
+            <svg className="w-5 h-5 ml-0.5" viewBox="0 0 24 24" fill="#1e1b4b">
+              <path d="M8 5.5v13a1 1 0 0 0 1.5.87l11-6.5a1 1 0 0 0 0-1.74l-11-6.5A1 1 0 0 0 8 5.5z" />
+            </svg>
+          )}
+        </button>
 
-          <div className="flex-1 min-w-0">
-            {titel && (
-              <p className="text-indigo-100 text-sm mb-2 truncate">{titel}</p>
-            )}
-            <div className="h-1.5 rounded-full bg-indigo-950">
-              <div
-                className="h-1.5 rounded-full bg-yellow-400 transition-[width] duration-300"
-                style={{ width: `${fortschritt}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between mt-3">
-          <span className="text-indigo-400 text-xs">
+        <div className="flex-1 min-w-0">
+          {titel && (
+            <p className="text-indigo-100 text-sm truncate">{titel}</p>
+          )}
+          <p className="text-indigo-400 text-xs">
             {laden
               ? t("vorlese.erzeugt")
               : puffert
               ? t("vorlese.puffert")
-              : `${formatZeit(position)} / ${formatZeit(gesamt)}`}
-          </span>
+              : zeigtPause
+              ? t("vorlese.laeuft")
+              : pausiert
+              ? t("vorlese.pausiert")
+              : t("vorlese.bereit")}
+          </p>
+        </div>
 
-          <div className="flex items-center gap-1.5">
-            {TEMPOS.map((tp) => (
-              <button
-                key={tp.wert}
-                onClick={() => tempoSetzen(tp.wert)}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium transition ${
-                  tempo === tp.wert
-                    ? "bg-yellow-400 text-indigo-950"
-                    : "bg-indigo-950 text-indigo-300 hover:text-white"
-                }`}
-              >
-                {tp.label}
-              </button>
-            ))}
+        <div className="flex items-center gap-1.5">
+          {TEMPOS.map((tp) => (
+            <button
+              key={tp.wert}
+              onClick={() => tempoSetzen(tp.wert)}
+              className={`px-2.5 py-1 rounded-full text-xs font-medium transition ${
+                tempo === tp.wert
+                  ? "bg-yellow-400 text-indigo-950"
+                  : "bg-indigo-950 text-indigo-300 hover:text-white"
+              }`}
+            >
+              {tp.label}
+            </button>
+          ))}
 
-            {(spielt || pausiert) && (
-              <button
-                onClick={stoppen}
-                aria-label={t("vorlese.stoppen")}
-                className="ml-1 w-7 h-7 rounded-full bg-indigo-950 hover:bg-red-500/40 text-indigo-300 hover:text-red-200 flex items-center justify-center transition"
-              >
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                  <rect x="5" y="5" width="14" height="14" rx="2" />
-                </svg>
-              </button>
-            )}
-          </div>
+          {(spielt || pausiert) && (
+            <button
+              onClick={stoppen}
+              aria-label={t("vorlese.stoppen")}
+              className="ml-1 w-7 h-7 rounded-full bg-indigo-950 hover:bg-red-500/40 text-indigo-300 hover:text-red-200 flex items-center justify-center transition"
+            >
+              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="5" y="5" width="14" height="14" rx="2" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
