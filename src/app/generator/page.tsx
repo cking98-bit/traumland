@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import {
   speichereGeschichte,
-  speichereBild,
   zaehleGeschichten,
   ladeGeschichteById,
   MAX_GESCHICHTEN,
@@ -196,15 +195,6 @@ export default function GeneratorPage() {
     const stilText = stil.map((id) => stilLabel(id, t)).join(", ")
 
     try {
-      // Bild parallel zur Geschichte generieren – so ist beides zusammen fertig
-      const bildPromise = authFetch("/api/bild", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ stichwörter, stil: stilText }),
-      })
-        .then((r) => r.json())
-        .catch(() => null)
-
       const response = await authFetch("/api/geschichte", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -255,13 +245,9 @@ export default function GeneratorPage() {
       // Gratis-Status aktualisieren (Flag wurde serverseitig gesetzt)
       if (gratisModus) aboNeuLaden()
 
-      // Auf die Illustration warten und speichern –
-      // die Geschichte öffnet sich erst, wenn beides fertig ist
-      const bildDaten = await bildPromise
-      if (id && bildDaten?.bild) {
-        await speichereBild(nutzer.uid, id, bildDaten.bild)
-      }
-
+      // Sofort zur Geschichte wechseln – die Illustration wird dort im
+      // Hintergrund erzeugt und nachgeladen, damit der Text nicht auf das
+      // langsamere Bild warten muss.
       const params = new URLSearchParams({
         name,
         alter,
@@ -272,6 +258,7 @@ export default function GeneratorPage() {
         titel: data.titel || "",
         sprache: geschichteSprache,
         id: id || "",
+        neu: "1", // frisch erstellt → Illustration sofort erzeugen
       })
 
       router.push(`/geschichte?${params.toString()}`)

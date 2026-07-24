@@ -16,6 +16,7 @@ type Params = {
   geschichte: string
   titel: string
   id: string
+  neu: boolean
 }
 
 export default function GeschichtePage() {
@@ -33,6 +34,7 @@ export default function GeschichtePage() {
       geschichte: sp.get("geschichte") ?? "",
       titel: sp.get("titel") ?? "",
       id: sp.get("id") ?? "",
+      neu: sp.get("neu") === "1",
     })
   }, [])
 
@@ -54,6 +56,7 @@ export default function GeschichtePage() {
               stichwörter={p.stichwörter}
               stil={p.stil}
               geschichteId={p.id || undefined}
+              frischErstellt={p.neu}
             />
           )}
 

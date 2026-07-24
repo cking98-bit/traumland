@@ -11,11 +11,13 @@ export default function Illustration({
   stil,
   geschichteId,
   vorhandenessBild,
+  frischErstellt = false,
 }: {
   stichwörter: string
   stil: string
   geschichteId?: string
   vorhandenessBild?: string
+  frischErstellt?: boolean
 }) {
   const { t } = useSprache()
   const { nutzer } = useAuth()
@@ -26,7 +28,15 @@ export default function Illustration({
   useEffect(() => {
     if (bild) return
 
-    // Gespeichertes Bild aus der Bibliothek laden – nur generieren wenn keins da ist
+    // Frisch erstellte Geschichte: es gibt garantiert noch kein Bild –
+    // sofort generieren, ohne erst die Bibliothek zu laden (spart Zeit).
+    // Auf den Nutzer warten, damit das erzeugte Bild gespeichert werden kann.
+    if (frischErstellt) {
+      if (nutzer) erzeugen()
+      return
+    }
+
+    // Bestehende Geschichte: gespeichertes Bild laden, nur generieren wenn keins da ist
     if (geschichteId && nutzer) {
       ladeGeschichteById(nutzer.uid, geschichteId).then((g) => {
         if (g?.bild) {
@@ -40,7 +50,7 @@ export default function Illustration({
 
     if (nutzer !== undefined) erzeugen()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geschichteId, nutzer])
+  }, [geschichteId, nutzer, frischErstellt])
 
   async function erzeugen() {
     setFehler("")
