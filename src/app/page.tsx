@@ -35,29 +35,21 @@ export default function Home() {
         )}
       </div>
 
-      {/* Beispiel-Geschichte */}
-      <div className="mt-16 bg-indigo-900 rounded-3xl overflow-hidden md:flex">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/demo-bild.png"
-          alt={t("home.beispielAlt")}
-          className="w-full md:w-2/5 h-56 md:h-auto object-cover"
-        />
-        <div className="p-6 md:p-8 flex-1 text-left">
-          <p className="text-yellow-400 text-xs font-bold uppercase tracking-wide mb-2">
-            {t("home.beispielLabel")}
-          </p>
-          <h2 className="text-white font-bold text-xl mb-3">
-            {t("home.beispielTitel")}
-          </h2>
-          <p className="text-indigo-200 text-sm leading-relaxed mb-4">
-            {t("home.beispielText")}
-          </p>
+      {/* Beispiel-Geschichte – Editorial-Stil, ohne Bild */}
+      <div className="mt-16 bg-indigo-900 rounded-3xl p-6 md:p-8 text-left max-w-2xl mx-auto">
+        <p className="text-yellow-400 text-xs font-bold uppercase tracking-wide mb-2">
+          {t("home.beispielLabel")}
+        </p>
+        <h2 className="text-white font-bold text-2xl mb-4">
+          {t("home.beispielTitel")}
+        </h2>
+        <p className="text-indigo-200 text-base leading-relaxed mb-6 first-letter:float-left first-letter:text-5xl first-letter:font-bold first-letter:text-yellow-400 first-letter:mr-2 first-letter:mt-1 first-letter:leading-[0.8]">
+          {t("home.beispielText")}
+        </p>
 
-          {/* Hörprobe – Quelle wechselt mit der Sprache */}
-          <p className="text-indigo-300 text-xs mb-2">🔊 {t("home.hoerprobe")}</p>
-          <DemoPlayer key={sprache} src={demoAudio} />
-        </div>
+        {/* Hörprobe – Quelle wechselt mit der Sprache */}
+        <p className="text-indigo-300 text-xs mb-2">🔊 {t("home.hoerprobe")}</p>
+        <DemoPlayer key={sprache} src={demoAudio} />
       </div>
 
       {/* So funktioniert's */}

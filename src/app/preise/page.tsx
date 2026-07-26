@@ -32,7 +32,6 @@ const PLAENE: Plan[] = [
     featureKeys: [
       "feat.profil",
       "feat.bis5",
-      "feat.illu",
       "feat.vorlesen",
       "feat.bibliothek",
       "feat.monatlichKuendbar",
@@ -50,7 +49,6 @@ const PLAENE: Plan[] = [
     featureKeys: [
       "feat.profil",
       "feat.alleLaengen",
-      "feat.illu",
       "feat.vorlesen",
       "feat.bibliothek",
       "feat.prio",

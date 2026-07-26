@@ -36,7 +36,7 @@ export default function DatenschutzPage() {
               <li>E-Mail-Adresse (bei Registrierung)</li>
               <li>Name des Kindes und Geburtsdatum (für Kinderprofil)</li>
               <li>Stichwörter, Stil-Präferenzen und optionale Themen für die Geschichten</li>
-              <li>Erstellte Geschichten samt Illustrationen (in deiner Bibliothek, max. 10)</li>
+              <li>Erstellte Geschichten (in deiner Bibliothek, max. 10)</li>
               <li>Nutzungszähler (Anzahl erstellter Geschichten pro Abrechnungszeitraum)</li>
               <li>Abo-Daten (Tarif, Anzahl Kinder, Stripe-Kunden- und Abonnement-ID)</li>
               <li>Zahlungsdaten (werden direkt an Stripe übermittelt, nicht bei uns gespeichert)</li>
@@ -72,7 +72,7 @@ export default function DatenschutzPage() {
             <h3 className="text-white font-semibold mt-3 mb-1">Firebase (Google LLC)</h3>
             <p>
               Wir nutzen Firebase für Authentifizierung und Datenspeicherung (Firestore). Dort werden dein
-              Konto, die Kinderprofile, deine Bibliothek mit Geschichten und Bildern sowie Abo- und
+              Konto, die Kinderprofile, deine Bibliothek mit Geschichten sowie Abo- und
               Nutzungsdaten gespeichert. Anbieter ist Google LLC, 1600 Amphitheatre
               Parkway, Mountain View, CA 94043, USA. Datenschutzerklärung:{" "}
               <a href="https://firebase.google.com/support/privacy" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:text-yellow-300">
@@ -91,7 +91,7 @@ export default function DatenschutzPage() {
 
             <h3 className="text-white font-semibold mt-3 mb-1">Google Gemini AI</h3>
             <p>
-              Zur Generierung von Geschichten, Illustrationen und der Vorlesestimme nutzen wir die Google
+              Zur Generierung von Geschichten und der Vorlesestimme nutzen wir die Google
               Gemini API. Die Anfragen enthalten den Kindernamen, das Alter, Stichwörter, gewählte Stile
               und Themen sowie für die Vorlesefunktion den Geschichtentext. Datenschutzerklärung:{" "}
               <a href="https://ai.google.dev/gemini-api/terms" target="_blank" rel="noopener noreferrer" className="text-yellow-400 hover:text-yellow-300">

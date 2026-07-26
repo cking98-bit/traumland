@@ -29,7 +29,7 @@ export default function AgbPage() {
             <p>
               Der Anbieter stellt eine Web-Anwendung bereit, mit der personalisierte,
               KI-generierte Gute-Nacht-Geschichten für Kinder erstellt werden können –
-              einschließlich Illustrationen und optionaler Vorlesefunktion. Der Umfang
+              einschließlich optionaler Vorlesefunktion. Der Umfang
               (Anzahl der Geschichten, Geschichtenlänge, Anzahl der Kinderprofile) richtet
               sich nach dem gewählten Tarif. Die Geschichten werden durch künstliche
               Intelligenz erzeugt; der Anbieter übernimmt keine Gewähr für einen bestimmten
@@ -88,7 +88,7 @@ export default function AgbPage() {
           <section>
             <h2 className="text-white font-bold text-lg mb-2">§ 7 Nutzungsrechte</h2>
             <p>
-              Die erstellten Geschichten und Illustrationen dürfen für private,
+              Die erstellten Geschichten dürfen für private,
               nicht-kommerzielle Zwecke frei genutzt werden. Eine kommerzielle Verwertung
               ist ausgeschlossen.
             </p>

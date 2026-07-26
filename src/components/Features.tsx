@@ -16,13 +16,6 @@ export default function Features() {
       info: t("feature.ki.info"),
     },
     {
-      key: "bild",
-      icon: "🎨",
-      titel: t("feature.bild.titel"),
-      kurz: t("feature.bild.kurz"),
-      info: t("feature.bild.info"),
-    },
-    {
       key: "audio",
       icon: "🔊",
       titel: t("feature.audio.titel"),
@@ -32,7 +25,7 @@ export default function Features() {
   ]
 
   return (
-    <div className="grid sm:grid-cols-3 gap-6 mt-16 text-left">
+    <div className="grid sm:grid-cols-2 gap-6 mt-16 text-left max-w-2xl mx-auto">
       {FEATURES.map((f) => {
         const istOffen = offen === f.key
         return (
