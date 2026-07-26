@@ -9,7 +9,6 @@ export type Geschichte = {
   dauer: string
   geschichte: string
   titel?: string
-  bild?: string
   sprache?: string // Sprache der Geschichte: "de" | "en"
   datum: number
 }
@@ -29,29 +28,6 @@ function ladeLokaleGeschichten(): Geschichte[] {
   }
 }
 
-// Bild verkleinern, damit es in ein Firestore-Dokument passt (< 1 MB)
-export function komprimiereBild(
-  dataUrl: string,
-  maxBreite = 800,
-  qualitaet = 0.8
-): Promise<string> {
-  return new Promise((resolve) => {
-    const img = new Image()
-    img.onload = () => {
-      const skala = Math.min(1, maxBreite / img.width)
-      const canvas = document.createElement("canvas")
-      canvas.width = Math.round(img.width * skala)
-      canvas.height = Math.round(img.height * skala)
-      const ctx = canvas.getContext("2d")
-      if (!ctx) return resolve(dataUrl)
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-      resolve(canvas.toDataURL("image/jpeg", qualitaet))
-    }
-    img.onerror = () => resolve(dataUrl)
-    img.src = dataUrl
-  })
-}
-
 // Geschichten aus Firestore laden – hängen am Nutzer-Account,
 // damit die Bibliothek auf allen Geräten gleich ist
 export async function ladeGeschichten(uid: string): Promise<Geschichte[]> {
@@ -66,12 +42,10 @@ export async function ladeGeschichten(uid: string): Promise<Geschichte[]> {
       const lokal = ladeLokaleGeschichten()
       if (lokal.length > 0) {
         for (const g of lokal.slice(0, MAX_GESCHICHTEN)) {
-          const kopie = { ...g }
-          if (kopie.bild) kopie.bild = await komprimiereBild(kopie.bild)
           await authFetch("/api/bibliothek", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ uid, geschichte: kopie }),
+            body: JSON.stringify({ uid, geschichte: g }),
           })
         }
         localStorage.removeItem(SCHLUESSEL)
@@ -119,19 +93,6 @@ export async function speichereGeschichte(
     return data.id ?? null
   } catch {
     return null
-  }
-}
-
-export async function speichereBild(uid: string, id: string, bild: string) {
-  try {
-    const klein = await komprimiereBild(bild)
-    await authFetch("/api/bibliothek", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uid, id, bild: klein }),
-    })
-  } catch {
-    // Bild ist optional – Fehler still ignorieren
   }
 }
 

@@ -58,24 +58,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// PATCH { id, bild } → Bild nachträglich speichern
-export async function PATCH(req: NextRequest) {
-  const uid = await verifiziereNutzer(req)
-  if (!uid) return NextResponse.json({ fehler: "Nicht angemeldet" }, { status: 401 })
-
-  try {
-    const { id, bild } = await req.json()
-    if (!id || !bild) {
-      return NextResponse.json({ fehler: "Angaben unvollständig" }, { status: 400 })
-    }
-    await sammlung(uid).doc(id).set({ bild }, { merge: true })
-    return NextResponse.json({ ok: true })
-  } catch (err) {
-    console.error("Bibliothek PATCH Fehler:", err)
-    return NextResponse.json({ fehler: "Serverfehler" }, { status: 500 })
-  }
-}
-
 // DELETE ?id=... → Geschichte löschen
 export async function DELETE(req: NextRequest) {
   const uid = await verifiziereNutzer(req)

@@ -245,9 +245,7 @@ export default function GeneratorPage() {
       // Gratis-Status aktualisieren (Flag wurde serverseitig gesetzt)
       if (gratisModus) aboNeuLaden()
 
-      // Sofort zur Geschichte wechseln – die Illustration wird dort im
-      // Hintergrund erzeugt und nachgeladen, damit der Text nicht auf das
-      // langsamere Bild warten muss.
+      // Sofort zur Geschichte wechseln
       const params = new URLSearchParams({
         name,
         alter,
@@ -258,7 +256,6 @@ export default function GeneratorPage() {
         titel: data.titel || "",
         sprache: geschichteSprache,
         id: id || "",
-        neu: "1", // frisch erstellt → Illustration sofort erzeugen
       })
 
       router.push(`/geschichte?${params.toString()}`)

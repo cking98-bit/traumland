@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import VorleseButton from "@/components/VorleseButton"
-import Illustration from "@/components/Illustration"
 import SchutzRoute from "@/components/SchutzRoute"
 import { useSprache } from "@/components/LanguageProvider"
 
@@ -16,7 +15,6 @@ type Params = {
   geschichte: string
   titel: string
   id: string
-  neu: boolean
 }
 
 export default function GeschichtePage() {
@@ -34,46 +32,67 @@ export default function GeschichtePage() {
       geschichte: sp.get("geschichte") ?? "",
       titel: sp.get("titel") ?? "",
       id: sp.get("id") ?? "",
-      neu: sp.get("neu") === "1",
     })
   }, [])
 
+  // Stil-Liste ("Abenteuer, Märchen") in einzelne Tags aufteilen
+  const stilTags = p?.stil
+    ? p.stil.split(",").map((s) => s.trim()).filter(Boolean)
+    : []
+
   return (
     <SchutzRoute>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-1">
-          {p?.titel ? `🌙 ${p.titel}` : `${t("reader.fuer")} ${p?.name}`}
+      <article className="max-w-2xl mx-auto">
+        {/* Meta-Tags */}
+        <div className="flex flex-wrap gap-2 mb-4">
+          {stilTags.map((tag) => (
+            <span
+              key={tag}
+              className="bg-indigo-800 text-indigo-200 text-xs font-medium px-3 py-1.5 rounded-lg"
+            >
+              {tag}
+            </span>
+          ))}
+          {p?.alter && (
+            <span className="bg-indigo-800 text-indigo-200 text-xs font-medium px-3 py-1.5 rounded-lg">
+              {p.alter} {t("gemein.jahre")}
+            </span>
+          )}
+          {p?.dauer && (
+            <span className="bg-indigo-800 text-indigo-200 text-xs font-medium px-3 py-1.5 rounded-lg">
+              ~{p.dauer} {t("gemein.min")}
+            </span>
+          )}
+        </div>
+
+        {/* Titel */}
+        <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mb-2">
+          {p?.titel || `${t("reader.fuer")} ${p?.name}`}
         </h1>
-        <p className="text-indigo-400 text-sm mb-8">
-          {p?.titel ? `${t("reader.fuer")} ${p?.name} · ` : ""}
-          {p?.alter} {t("gemein.jahre")} · {p?.stichwörter} · {p?.stil}
-          {p?.dauer ? ` · ~${p.dauer} ${t("gemein.min")}` : ""}
-        </p>
+        {p?.titel && (
+          <p className="text-indigo-400 text-sm mb-6">
+            {t("reader.fuer")} {p?.name}
+            {p?.stichwörter ? ` · ${p.stichwörter}` : ""}
+          </p>
+        )}
 
-        <div className="bg-indigo-900 rounded-2xl p-8">
-          {p && (
-            <Illustration
-              stichwörter={p.stichwörter}
-              stil={p.stil}
-              geschichteId={p.id || undefined}
-              frischErstellt={p.neu}
-            />
-          )}
-
-          {p?.geschichte && (
+        {/* Vorlesen */}
+        {p?.geschichte && (
+          <div className="border-y border-indigo-800 py-5 my-6">
             <VorleseButton text={p.geschichte} titel={p.titel || undefined} />
-          )}
-
-          <div className="text-indigo-100 leading-relaxed text-lg whitespace-pre-line">
-            {p?.geschichte}
           </div>
+        )}
+
+        {/* Geschichte mit Initial-Buchstabe */}
+        <div className="text-indigo-100 leading-[1.85] text-lg whitespace-pre-line first-letter:float-left first-letter:text-6xl first-letter:font-bold first-letter:text-yellow-400 first-letter:mr-3 first-letter:mt-1 first-letter:leading-[0.8]">
+          {p?.geschichte}
         </div>
 
         {/* Fortsetzung – nur wenn die Geschichte gespeichert ist (id vorhanden) */}
         {p?.id && (
           <Link
             href={`/generator?fortsetzung=${p.id}`}
-            className="block w-full bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-3 rounded-xl text-center transition mt-6"
+            className="block w-full bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-3 rounded-xl text-center transition mt-10"
           >
             {t("reader.fortsetzung")}
           </Link>
@@ -93,7 +112,7 @@ export default function GeschichtePage() {
             {t("reader.zurBibliothek")}
           </Link>
         </div>
-      </div>
+      </article>
     </SchutzRoute>
   )
 }

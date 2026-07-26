@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   try {
     const { email, name, nachricht } = await req.json()
     if (!email?.trim()) {
-      return NextResponse.json({ fehler: "E-Mail fehlt" }, { status: 400 })
+      return NextResponse.json({ fehler: "Bitte geben Sie Ihre Emailadresse ein" }, { status: 400 })
     }
 
     const eingegangen = Date.now()
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ ok: true, referenz: doc.id, eingegangen })
   } catch (err) {
-    console.error("Kündigungsanfrage Fehler:", err)
+    console.error("Bei Ihrer Kündigungsanfrage ist ein Fehler aufgetreten, bitte versuchen Sie es später erneut oder kontaktieren Sie uns hier über unser Kontaktformular:", err)
     return NextResponse.json({ fehler: "Serverfehler" }, { status: 500 })
   }
 }

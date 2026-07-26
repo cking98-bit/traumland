@@ -100,40 +100,45 @@ export default function BibliothekPage() {
 
       {/* Geschichten-Liste */}
       <div className="grid sm:grid-cols-2 gap-4">
-        {geschichten.map((g) => (
-          <div
-            key={g.id}
-            className="bg-indigo-900 rounded-2xl overflow-hidden flex flex-col"
-          >
-            {/* Gespeichertes Bild */}
-            {g.bild ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={g.bild}
-                alt="Illustration"
-                className="w-full h-40 object-cover"
-              />
-            ) : (
-              <div className="w-full h-40 bg-indigo-800 flex items-center justify-center">
-                <span className="text-indigo-500 text-sm">{t("bib.keinBild")}</span>
+        {geschichten.map((g) => {
+          const stilTags = g.stil
+            ? g.stil.split(",").map((s) => s.trim()).filter(Boolean)
+            : []
+          return (
+            <div
+              key={g.id}
+              className="bg-indigo-900 rounded-2xl p-5 flex flex-col"
+            >
+              {/* Meta-Tags */}
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {stilTags.slice(0, 2).map((tag) => (
+                  <span
+                    key={tag}
+                    className="bg-indigo-800 text-indigo-300 text-[11px] font-medium px-2.5 py-1 rounded-md"
+                  >
+                    {tag}
+                  </span>
+                ))}
+                <span className="bg-indigo-800 text-indigo-300 text-[11px] font-medium px-2.5 py-1 rounded-md">
+                  {g.alter} {t("gemein.jahre")}
+                </span>
+                <span className="bg-indigo-800 text-indigo-300 text-[11px] font-medium px-2.5 py-1 rounded-md">
+                  ~{g.dauer} {t("gemein.min")}
+                </span>
               </div>
-            )}
 
-            <div className="p-5 flex flex-col flex-1">
-              <h3 className="text-white font-bold text-lg mb-1">
-                🌙 {g.titel || g.name}
+              <h3 className="text-white font-bold text-lg leading-snug mb-1">
+                {g.titel || g.name}
               </h3>
-              {g.titel && (
-                <p className="text-indigo-300 text-xs mb-1">
-                  {t("reader.fuer")} {g.name}
-                </p>
-              )}
-              <p className="text-indigo-400 text-xs mb-2">
-                {new Date(g.datum).toLocaleDateString(sprache === "de" ? "de-DE" : "en-GB")} · {g.alter} {t("gemein.jahre")} · ~{g.dauer} {t("gemein.min")}
+              <p className="text-indigo-400 text-xs mb-3">
+                {g.titel ? `${t("reader.fuer")} ${g.name} · ` : ""}
+                {new Date(g.datum).toLocaleDateString(sprache === "de" ? "de-DE" : "en-GB")}
               </p>
-              <p className="text-indigo-200 text-sm mb-4 line-clamp-2 flex-1">
+
+              <p className="text-indigo-200 text-sm leading-relaxed mb-4 line-clamp-3 flex-1">
                 {g.geschichte}
               </p>
+
               <div className="flex gap-2">
                 <Link
                   href={geschichteLink(g)}
@@ -155,8 +160,8 @@ export default function BibliothekPage() {
                 {t("bib.fortsetzung")}
               </Link>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
     </SchutzRoute>
