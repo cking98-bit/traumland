@@ -238,6 +238,16 @@ export const texte: Record<Sprache, Dict> = {
     "konto.zugang": "Dein Zugang",
     "konto.kontakt": "Kontakt & Hilfe",
     "konto.adresseHinweis": "Deine Rechnungsadresse gibst du direkt beim Bezahlvorgang an – sie wird sicher bei unserem Zahlungsdienstleister Stripe gespeichert und erscheint auf deiner Rechnung.",
+
+    // Auth-Aktionen (Passwort zurücksetzen)
+    "auth.linkUngueltig": "Dieser Link ist ungültig oder abgelaufen. Bitte fordere einen neuen Link an.",
+    "auth.zumLogin": "Zum Login",
+    "auth.passwortGeaendert": "Dein Passwort wurde erfolgreich geändert. Du kannst dich jetzt anmelden.",
+    "auth.jetztAnmelden": "Jetzt anmelden",
+    "auth.fuerEmail": "Neues Passwort für {email}",
+    "auth.neuesPasswort": "Neues Passwort",
+    "auth.passwortSpeichern": "Passwort speichern",
+
     "abo.verbleibend": "Verbleibend",
     "abo.geschichtenAnzahl": "{n} Geschichten",
     "abo.schnupperHinweis": "Einmalkauf ohne Abo. Wenn dein Guthaben aufgebraucht ist, kannst du ein neues Paket kaufen oder auf ein Abo wechseln.",
@@ -605,6 +615,15 @@ export const texte: Record<Sprache, Dict> = {
     "konto.zugang": "Your access",
     "konto.kontakt": "Contact & help",
     "konto.adresseHinweis": "You enter your billing address during checkout – it is stored securely with our payment provider Stripe and appears on your invoice.",
+
+    "auth.linkUngueltig": "This link is invalid or expired. Please request a new one.",
+    "auth.zumLogin": "Go to login",
+    "auth.passwortGeaendert": "Your password has been changed successfully. You can now log in.",
+    "auth.jetztAnmelden": "Log in now",
+    "auth.fuerEmail": "New password for {email}",
+    "auth.neuesPasswort": "New password",
+    "auth.passwortSpeichern": "Save password",
+
     "abo.verbleibend": "Remaining",
     "abo.geschichtenAnzahl": "{n} stories",
     "abo.schnupperHinweis": "One-time purchase, no subscription. Once your credit is used up, you can buy another pack or switch to a subscription.",

@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  sendPasswordResetEmail,
   updateProfile,
 } from "firebase/auth"
 import { auth } from "@/lib/firebase"
@@ -101,23 +100,16 @@ export default function LoginPage() {
       setFehler(t("login.fehler.felder"))
       return
     }
-    if (!auth) {
-      setFehler(t("login.fehler.nichtVerfuegbar"))
-      return
-    }
     setLadevorgang(true)
     try {
-      await sendPasswordResetEmail(auth, email)
+      await fetch("/api/passwort-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
       setErfolg(t("login.passwortResetGesendet"))
-    } catch (error: unknown) {
-      const code = (error as { code?: string })?.code
-      // "user-not-found" bewusst wie Erfolg behandeln: sonst ließe sich über
-      // die Fehlermeldung herausfinden, welche E-Mail-Adressen ein Konto haben.
-      if (code === "auth/user-not-found") {
-        setErfolg(t("login.passwortResetGesendet"))
-      } else {
-        setFehler(t("login.passwortResetFehler"))
-      }
+    } catch {
+      setFehler(t("login.passwortResetFehler"))
     } finally {
       setLadevorgang(false)
     }
