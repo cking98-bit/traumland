@@ -25,12 +25,12 @@ export async function POST(req: NextRequest) {
       url: `${process.env.NEXT_PUBLIC_BASE_URL}/login`,
     })
 
-    const vorname = user.displayName?.split(" ")[0] ?? ""
+    const name = user.displayName?.trim() ?? ""
 
     await sendeMail(
       sEmail,
       "Passwort zurücksetzen – Nachtfunke",
-      `Hallo${vorname ? " " + vorname : ""},
+      `Hallo${name ? " " + name : ""},
 
 du hast eine Anfrage zum Zurücksetzen deines Passworts gestellt.
 

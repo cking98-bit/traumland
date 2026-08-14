@@ -11,16 +11,16 @@ const transporter = nodemailer.createTransport({
   },
 })
 
-// Einheitliche Signatur unter allen ausgehenden Mails
+// Einheitliche Signatur unter allen ausgehenden Mails.
+// Bewusst ohne Anschrift – die Pflichtangaben stehen im Impressum auf
+// nachtfunke.de und (fuer Rechnungen) in der Stripe-Rechnungsfusszeile.
 export const SIGNATUR = `
 
 --
 🌙 Nachtfunke
 KI-Gute-Nacht-Geschichten für dein Kind
 
-nachtfunke.de · support@nachtfunke.de
-
-Colin King · Rostockerstraße 38 · 10553 Berlin`
+nachtfunke.de · support@nachtfunke.de`
 
 export async function sendeMail(an: string, betreff: string, text: string) {
   await transporter.sendMail({
