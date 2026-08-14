@@ -27,6 +27,7 @@ export default function Navigation() {
         { href: "/bibliothek", label: t("nav.bibliothek") },
         { href: "/profile", label: t("nav.profile") },
         { href: "/abo", label: t("nav.abo") },
+        { href: "/konto", label: t("konto.titel") },
         { href: "/preise", label: t("nav.preise") },
       ]
     : [

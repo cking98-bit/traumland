@@ -28,10 +28,10 @@ export default function ImpressumPage() {
             <p>
               E-Mail:{" "}
               <a
-                href="mailto:colin.kinginfo@gmail.com"
+                href="mailto:support@nachtfunke.de"
                 className="text-yellow-400 hover:text-yellow-300"
               >
-                colin.kinginfo@gmail.com
+                support@nachtfunke.de
               </a>
             </p>
           </section>

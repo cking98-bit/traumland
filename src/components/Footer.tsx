@@ -26,6 +26,9 @@ export default function Footer() {
           <Link href="/kuendigen" className="hover:text-indigo-300 transition">
             {t("footer.kuendigen")}
           </Link>
+          <Link href="/kontakt" className="hover:text-indigo-300 transition">
+            Kontakt
+          </Link>
         </div>
       </div>
     </footer>

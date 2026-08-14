@@ -46,9 +46,13 @@ function zuStilId(wert: string): string | null {
 export default function GeneratorPage() {
   const router = useRouter()
   const { t, sprache } = useSprache()
-  const { nutzer, abo, aboLaden, gratisGenutzt, aboNeuLaden } = useAuth()
+  const { nutzer, abo, aboLaden, schnupperGuthaben, aboNeuLaden } = useAuth()
 
   const hatAbo = !!abo && abo.status !== "gekuendigt"
+  // Schnupper-Paket: hat Guthaben, aber kein Abo → volles Formular,
+  // verbraucht Credits statt Tageskontingent
+  const creditModus = !hatAbo && schnupperGuthaben > 0
+  const keinZugang = !hatAbo && !creditModus
 
   const [profile, setProfile] = useState<Profil[]>([])
   const [profileGeladen, setProfileGeladen] = useState(false)
@@ -61,10 +65,6 @@ export default function GeneratorPage() {
   const [laden, setLaden] = useState(false)
   const [fehler, setFehler] = useState("")
   const [vorherige, setVorherige] = useState<Geschichte | null>(null)
-
-  // Gratis-Modus: Name + Alter direkt eingeben (ohne Profil)
-  const [gratisName, setGratisName] = useState("")
-  const [gratisAlter, setGratisAlter] = useState("")
 
   // Geschichten-Kontingent für den laufenden Abrechnungszeitraum
   const [zaehler, setZaehler] = useState<{
@@ -134,6 +134,10 @@ export default function GeneratorPage() {
 
   const ausgewählt = profile.find((p) => p.id === profilId)
 
+  useEffect(() => {
+    if (creditModus && dauer === "10") setDauer("5")
+  }, [creditModus, dauer])
+
   function toggleStil(id: string) {
     setStil((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
@@ -147,27 +151,15 @@ export default function GeneratorPage() {
   }
 
   const bibliothekVoll = anzahlGeschichten >= MAX_GESCHICHTEN
-  const gratisModus = !hatAbo
-
-  // Light-Tarif: Geschichten bis maximal 5 Minuten
-  const istLight = abo?.plan === "light"
-  const [zeigUpgrade, setZeigUpgrade] = useState(false)
-
-  useEffect(() => {
-    if (istLight && dauer === "10") setDauer("5")
-  }, [istLight, dauer])
 
   function validieren() {
     if (bibliothekVoll)
       return t("gen.fehler.voll").replace("{n}", String(MAX_GESCHICHTEN))
-    if (!gratisModus && zaehler && zaehler.verbleibend <= 0)
+    if (hatAbo && zaehler && zaehler.verbleibend <= 0)
       return t("gen.fehler.limit")
-    if (gratisModus) {
-      if (!gratisName.trim()) return t("profil.fehler.name")
-      if (!gratisAlter) return t("gen.fehler.alter")
-    } else {
-      if (!ausgewählt) return t("gen.fehler.kind")
-    }
+    if (creditModus && schnupperGuthaben <= 0)
+      return t("gen.fehler.limit")
+    if (!ausgewählt) return t("gen.fehler.kind")
     if (!stichwörter.trim()) return t("gen.fehler.stichwort")
     if (stil.length === 0) return t("gen.fehler.stil")
     return ""
@@ -184,12 +176,8 @@ export default function GeneratorPage() {
     setFehler("")
     setLaden(true)
 
-    const name = gratisModus ? gratisName.trim() : ausgewählt!.name
-    const alter = gratisModus
-      ? gratisAlter
-      : String(berechneAlter(ausgewählt!.geburtsdatum))
-    // Light-Tarif: maximal 5 Minuten
-    const echteDauer = gratisModus ? "2" : istLight && dauer === "10" ? "5" : dauer
+    const name = ausgewählt!.name
+    const alter = String(berechneAlter(ausgewählt!.geburtsdatum))
     const themenText = themen.map((id) => t(`thema.${id}`)).join(", ")
     // Stil als lesbares Label speichern ("Abenteuer, Märchen" statt "abenteuer, maerchen")
     const stilText = stil.map((id) => stilLabel(id, t)).join(", ")
@@ -204,9 +192,9 @@ export default function GeneratorPage() {
           stichwörter,
           stile: stilText,
           themen: themenText || null,
-          dauer: echteDauer,
+          dauer,
           sprache: geschichteSprache,
-          profilId: gratisModus ? null : profilId,
+          profilId,
           vorherigeGeschichte: vorherige?.geschichte ?? null,
         }),
       })
@@ -215,12 +203,6 @@ export default function GeneratorPage() {
 
       if (response.status === 429 || data.fehler === "limit") {
         setFehler(t("gen.fehler.limit"))
-        setLaden(false)
-        return
-      }
-
-      if (response.status === 403 || data.fehler === "gratis_verbraucht") {
-        setFehler(t("gen.gratisVerbraucht"))
         setLaden(false)
         return
       }
@@ -236,14 +218,14 @@ export default function GeneratorPage() {
         alter,
         stichwörter,
         stil: stilText,
-        dauer: echteDauer,
+        dauer,
         geschichte: data.geschichte,
         titel: data.titel || "",
         sprache: geschichteSprache,
       })
 
-      // Gratis-Status aktualisieren (Flag wurde serverseitig gesetzt)
-      if (gratisModus) aboNeuLaden()
+      // Schnupper-Guthaben aktualisieren (serverseitig gesetzt)
+      if (creditModus) aboNeuLaden()
 
       // Sofort zur Geschichte wechseln
       const params = new URLSearchParams({
@@ -251,7 +233,7 @@ export default function GeneratorPage() {
         alter,
         stichwörter,
         stil: stilText,
-        dauer: echteDauer,
+        dauer,
         geschichte: data.geschichte,
         titel: data.titel || "",
         sprache: geschichteSprache,
@@ -293,27 +275,27 @@ export default function GeneratorPage() {
         <p className="text-indigo-300 mb-8">{t("gen.untertitel")}</p>
 
         {/* Auth/Profile werden geladen */}
-        {aboLaden || (!gratisModus && !profileGeladen) ? (
+        {aboLaden || !profileGeladen ? (
           <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
             <div className="text-5xl animate-bounce">🌙</div>
             <p className="text-indigo-300">…</p>
           </div>
-        ) : gratisModus && gratisGenutzt ? (
-          /* Gratis-Geschichte schon verbraucht → Abo-CTA */
+        ) : keinZugang ? (
+          /* Kein Abo, kein Schnupper-Guthaben → zur Preise-Seite */
           <div className="bg-indigo-900 rounded-2xl p-10 text-center">
             <div className="text-5xl mb-3">🌙</div>
             <h2 className="text-white text-xl font-bold mb-2">
-              {t("gen.gratisVerbrauchtTitel")}
+              {t("gen.keinZugangTitel")}
             </h2>
-            <p className="text-indigo-300 mb-6">{t("gen.gratisVerbrauchtText")}</p>
+            <p className="text-indigo-300 mb-6">{t("gen.keinZugangText")}</p>
             <Link
               href="/preise"
               className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-8 py-3 rounded-xl transition inline-block"
             >
-              {t("gen.gratisVerbrauchtCta")}
+              {t("gen.keinZugangCta")}
             </Link>
           </div>
-        ) : !gratisModus && profile.length === 0 ? (
+        ) : profile.length === 0 ? (
           <div className="bg-indigo-900 rounded-2xl p-10 text-center">
             <div className="text-5xl mb-3">👧</div>
             <h2 className="text-white text-xl font-bold mb-2">
@@ -329,20 +311,8 @@ export default function GeneratorPage() {
           </div>
         ) : (
           <div className="bg-indigo-900 rounded-2xl p-8 flex flex-col gap-6">
-            {/* Gratis-Banner */}
-            {gratisModus && (
-              <div className="bg-yellow-400/10 border border-yellow-400/40 rounded-xl px-4 py-3">
-                <p className="text-yellow-300 font-bold text-sm">
-                  {t("gen.gratisBanner")}
-                </p>
-                <p className="text-yellow-200 text-xs mt-0.5">
-                  {t("gen.gratisBannerText")}
-                </p>
-              </div>
-            )}
-
-            {/* Geschichten-Kontingent */}
-            {!gratisModus && zaehler && (
+            {/* Geschichten-Kontingent (Abo) */}
+            {hatAbo && zaehler && (
               <div
                 className={`rounded-xl px-4 py-3 text-sm ${
                   zaehler.verbleibend <= 0
@@ -355,6 +325,21 @@ export default function GeneratorPage() {
                   {t("gen.zaehler")
                     .replace("{verbleibend}", String(zaehler.verbleibend))
                     .replace("{gesamt}", String(zaehler.gesamt))}
+                </p>
+              </div>
+            )}
+
+            {/* Schnupper-Guthaben */}
+            {creditModus && (
+              <div
+                className={`rounded-xl px-4 py-3 text-sm ${
+                  schnupperGuthaben <= 2
+                    ? "bg-orange-500/10 border border-orange-400/40 text-orange-300"
+                    : "bg-indigo-800/60 border border-indigo-700 text-indigo-200"
+                }`}
+              >
+                <p className="font-medium">
+                  ✨ {t("gen.schnupperGuthaben").replace("{n}", String(schnupperGuthaben))}
                 </p>
               </div>
             )}
@@ -381,62 +366,28 @@ export default function GeneratorPage() {
               </div>
             )}
 
-            {/* Kind: Profil-Auswahl (Abo) oder Name+Alter (Gratis) */}
-            {gratisModus ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-white font-medium block mb-2">
-                    {t("profil.name")}
-                  </label>
-                  <input
-                    type="text"
-                    value={gratisName}
-                    onChange={(e) => setGratisName(e.target.value)}
-                    placeholder={t("profil.namePlaceholder")}
-                    className="w-full bg-indigo-800 text-white placeholder-indigo-400 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
-                  />
-                </div>
-                <div>
-                  <label className="text-white font-medium block mb-2">
-                    {t("gen.alter")}
-                  </label>
-                  <select
-                    value={gratisAlter}
-                    onChange={(e) => setGratisAlter(e.target.value)}
-                    className="w-full bg-indigo-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
-                  >
-                    <option value="">–</option>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((a) => (
-                      <option key={a} value={String(a)}>
-                        {a} {t("gemein.jahre")}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <label className="text-white font-medium block mb-2">
-                  {t("gen.fuerKind")}
-                </label>
-                <select
-                  value={profilId}
-                  onChange={(e) => setProfilId(e.target.value)}
-                  className="w-full bg-indigo-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
-                >
-                  {profile.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({berechneAlter(p.geburtsdatum)} {t("gemein.jahre")})
-                    </option>
-                  ))}
-                </select>
-                <p className="text-indigo-400 text-xs mt-2">
-                  <Link href="/profile" className="underline">
-                    {t("gen.weitereKinder")}
-                  </Link>
-                </p>
-              </div>
-            )}
+            {/* Kind: Profil-Auswahl */}
+            <div>
+              <label className="text-white font-medium block mb-2">
+                {t("gen.fuerKind")}
+              </label>
+              <select
+                value={profilId}
+                onChange={(e) => setProfilId(e.target.value)}
+                className="w-full bg-indigo-800 text-white rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-yellow-400"
+              >
+                {profile.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({berechneAlter(p.geburtsdatum)} {t("gemein.jahre")})
+                  </option>
+                ))}
+              </select>
+              <p className="text-indigo-400 text-xs mt-2">
+                <Link href="/profile" className="underline">
+                  {t("gen.weitereKinder")}
+                </Link>
+              </p>
+            </div>
 
             {/* Sprache der Geschichte */}
             <div>
@@ -534,66 +485,42 @@ export default function GeneratorPage() {
               </div>
             </div>
 
-            {/* Dauer – im Gratis-Modus fest 2 Minuten */}
+            {/* Dauer */}
             <div>
               <label className="text-white font-medium block mb-2">
                 {t("gen.dauer")}{" "}
                 <span className="text-indigo-400 text-sm">
-                  {gratisModus ? t("gen.dauerGratisHint") : t("gen.dauerHint")}
+                  {t("gen.dauerHint")}
                 </span>
               </label>
-              {gratisModus ? (
-                <div className="rounded-xl py-3 text-center text-sm font-medium bg-yellow-400 text-indigo-950">
-                  {t("dauer.kurz")}
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-3 gap-3">
-                    {DAUER.map((d) => {
-                      const gesperrt = istLight && d.id === "10"
-                      return (
-                        <button
-                          key={d.id}
-                          onClick={() =>
-                            gesperrt ? setZeigUpgrade(!zeigUpgrade) : setDauer(d.id)
-                          }
-                          className={`rounded-xl py-3 text-sm font-medium transition ${
-                            gesperrt
-                              ? "border border-dashed border-indigo-600 text-indigo-500 hover:text-indigo-400 bg-transparent"
-                              : dauer === d.id
-                              ? "bg-yellow-400 text-indigo-950"
-                              : "bg-indigo-800 hover:bg-indigo-700 text-white"
-                          }`}
-                        >
-                          {gesperrt ? `🔒 ${t(d.key)}` : t(d.key)}
-                        </button>
-                      )
-                    })}
-                  </div>
-
-                  {/* Upgrade-Karte: erscheint beim Klick auf die gesperrte Option */}
-                  {istLight && zeigUpgrade && (
-                    <div className="mt-3 bg-indigo-950 border border-yellow-400/40 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <p className="text-indigo-100 text-sm">
-                        {t("gen.dauerGesperrt")}
-                      </p>
-                      <Link
-                        href="/preise"
-                        className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold text-sm px-4 py-2 rounded-lg text-center transition whitespace-nowrap"
-                      >
-                        {t("gen.jetztWechseln")}
-                      </Link>
-                    </div>
-                  )}
-                </>
-              )}
+              <div className="grid grid-cols-3 gap-3">
+                {DAUER.map((d) => {
+                  const gesperrt = creditModus && d.id === "10"
+                  return (
+                    <button
+                      key={d.id}
+                      onClick={() => (gesperrt ? undefined : setDauer(d.id))}
+                      disabled={gesperrt}
+                      className={`rounded-xl py-3 text-sm font-medium transition ${
+                        gesperrt
+                          ? "border border-dashed border-indigo-600 text-indigo-500 bg-transparent cursor-not-allowed"
+                          : dauer === d.id
+                          ? "bg-yellow-400 text-indigo-950"
+                          : "bg-indigo-800 hover:bg-indigo-700 text-white"
+                      }`}
+                    >
+                      {gesperrt ? `🔒 ${t(d.key)}` : t(d.key)}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
 
             <button
               onClick={handleSubmit}
               className="w-full bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold py-4 rounded-xl text-lg transition mt-2"
             >
-              {gratisModus ? t("gen.btnGratis") : t("gen.btn")}
+              {t("gen.btn")}
             </button>
           </div>
         )}

@@ -19,7 +19,11 @@ const pad = (n: string) => n.padStart(2, "0")
 
 export default function ProfilePage() {
   const { t, sprache } = useSprache()
-  const { abo, nutzer, aboNeuLaden } = useAuth()
+  const { abo, nutzer, aboNeuLaden, schnupperGuthaben } = useAuth()
+
+  // Schnupper-Paket: kein Abo, aber Zugang – ein Kinderprofil ist erlaubt
+  const nurSchnupper = !abo && schnupperGuthaben > 0
+  const maxKinder = abo ? abo.kinder : nurSchnupper ? 1 : 0
 
   const [profile, setProfile] = useState<Profil[]>([])
   const [profileGeladen, setProfileGeladen] = useState(false)
@@ -141,7 +145,7 @@ export default function ProfilePage() {
 
   const belegt = profile.length
   // Platz frei wenn Slots übrig – oder noch gar kein Kind da (immer erstes Kind erlauben)
-  const platzFrei = abo ? belegt < abo.kinder || belegt === 0 : false
+  const platzFrei = maxKinder > 0 ? belegt < maxKinder || belegt === 0 : false
 
   const planInfo = abo ? PLAN_INFO[abo.plan] : null
   const periode = planInfo?.periode === "Jahr" ? t("preise.jahr") : t("preise.monat")
@@ -151,7 +155,7 @@ export default function ProfilePage() {
 
   return (
     <SchutzRoute abo>
-      {!abo || !profileGeladen ? (
+      {!profileGeladen ? (
         <div className="flex items-center justify-center min-h-[40vh] text-indigo-300">
           …
         </div>
@@ -160,7 +164,7 @@ export default function ProfilePage() {
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <h1 className="text-2xl md:text-3xl font-bold text-white">{t("profil.titel")}</h1>
             <span className="text-sm font-medium px-3 py-1 rounded-full bg-indigo-800 text-indigo-300">
-              {belegt} {t("profil.von")} {abo.kinder} {t("profil.plaetze")}
+              {belegt} {t("profil.von")} {maxKinder} {t("profil.plaetze")}
             </span>
           </div>
           {checkoutErfolg && (
@@ -320,8 +324,31 @@ export default function ProfilePage() {
             </div>
           )}
 
-          {/* Weiteres Kind – erst sichtbar wenn min. 1 Kind vorhanden */}
-          {profile.length >= 1 && !zeigAddForm ? (
+          {/* Schnupper-Paket: weitere Kinder per Abo oder weiterem Paket */}
+          {nurSchnupper && profile.length >= 1 && (
+            <div className="mt-6 bg-indigo-900/60 border border-indigo-800 rounded-2xl p-5 text-center">
+              <p className="text-indigo-300 text-sm mb-4">
+                {t("profil.schnupperEinKind")}
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link
+                  href="/preise"
+                  className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-6 py-3 rounded-xl transition"
+                >
+                  {t("abo.aboAbschliessen")}
+                </Link>
+                <Link
+                  href="/preise"
+                  className="bg-indigo-800 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-xl transition"
+                >
+                  {t("profil.schnupperNachkaufen")}
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* Weiteres Kind – erst sichtbar wenn min. 1 Kind vorhanden (nur mit Abo) */}
+          {!nurSchnupper && profile.length >= 1 && !zeigAddForm ? (
             <div className="mt-6 bg-indigo-900/60 border border-indigo-800 rounded-2xl p-5 text-center">
               <button
                 onClick={() => setZeigAddForm(true)}
@@ -333,7 +360,7 @@ export default function ProfilePage() {
                 {t("profil.weiteresKindHinweis")}
               </p>
             </div>
-          ) : profile.length >= 1 && zeigAddForm ? (
+          ) : !nurSchnupper && profile.length >= 1 && zeigAddForm ? (
             <div className="mt-6 bg-indigo-900 border border-yellow-400/40 rounded-2xl p-6">
               <h2 className="text-white font-bold mb-1">{t("profil.weiteresKind")}</h2>
 

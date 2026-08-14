@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore"
 import { holeKontingent } from "@/lib/kontingent"
 import { verifiziereNutzer } from "@/lib/serverAuth"
 import { mitModellFallback } from "@/lib/geminiFallback"
+import { protokolliereNutzung, type TokenUsage } from "@/lib/kostenTracking"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -38,13 +39,10 @@ export async function POST(request: NextRequest) {
     const userDaten = userSnap.data() ?? {}
     const abo = userDaten.abo
     const hatAbo = !!abo && abo.status !== "gekuendigt"
-    let istGratisGeschichte = false
+    const schnupperGuthaben: number = userDaten.schnupper_guthaben ?? 0
+    let nutztSchnupperCredit = false
 
     if (hatAbo) {
-      // Light-Tarif: Geschichten bis maximal 5 Minuten
-      if (abo.plan === "light" && Number(dauer) > 5) {
-        dauer = "5"
-      }
       // Kontingent: so viele Geschichten wie Tage im Abrechnungszeitraum
       if (profilId) {
         const kontingent = await holeKontingent(uid, profilId)
@@ -52,13 +50,14 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ fehler: "limit" }, { status: 429 })
         }
       }
+    } else if (schnupperGuthaben > 0) {
+      // Schnupper-Paket: verbraucht 1 Credit statt Tageskontingent,
+      // Länge auf 5 Minuten gedeckelt (Kostenrisiko bei einmaliger Zahlung begrenzen)
+      nutztSchnupperCredit = true
+      if (Number(dauer) > 5) dauer = "5"
     } else {
-      // Kein Abo: 1 kostenlose 2-Minuten-Geschichte
-      if (userDaten.gratis_geschichte_genutzt) {
-        return NextResponse.json({ fehler: "gratis_verbraucht" }, { status: 403 })
-      }
-      istGratisGeschichte = true
-      dauer = "2"
+      // Kein Abo, kein Guthaben: kein Zugriff
+      return NextResponse.json({ fehler: "kein_zugang" }, { status: 403 })
     }
 
     // Vorlesen: ca. 130 Wörter pro Minute
@@ -148,7 +147,7 @@ Danach schreibe NUR die Geschichte, ohne weitere Einleitung.`
         )
         return null
       }
-      return text
+      return { text, usage: data.usageMetadata as TokenUsage | undefined }
     })
 
     if (!ergebnis) {
@@ -159,7 +158,9 @@ Danach schreibe NUR die Geschichte, ohne weitere Einleitung.`
       )
     }
 
-    const rohtext = ergebnis.daten
+    protokolliereNutzung("text", ergebnis.modell, ergebnis.daten.usage)
+
+    const rohtext = ergebnis.daten.text
 
     // Titel aus der ersten Zeile ziehen
     let titel = ""
@@ -170,15 +171,15 @@ Danach schreibe NUR die Geschichte, ohne weitere Einleitung.`
       geschichte = geschichte.replace(/^TIT(?:EL|LE):.*$/im, "").trim()
     }
 
-    // Zähler bzw. Gratis-Flag setzen
+    // Zähler setzen
     if (hatAbo && profilId) {
       const heute = new Date().toISOString().slice(0, 10)
       const zaehlerRef = adminDb.collection("users").doc(uid).collection("zaehler").doc(heute)
       await zaehlerRef.set({ [profilId]: FieldValue.increment(1) }, { merge: true })
     }
-    if (istGratisGeschichte) {
+    if (nutztSchnupperCredit) {
       await adminDb.collection("users").doc(uid).set(
-        { gratis_geschichte_genutzt: true },
+        { schnupper_guthaben: FieldValue.increment(-1) },
         { merge: true }
       )
     }

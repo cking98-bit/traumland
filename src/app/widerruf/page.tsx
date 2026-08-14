@@ -23,8 +23,8 @@ export default function WiderrufPage() {
             <p className="mt-2">
               Um dein Widerrufsrecht auszuüben, musst du uns (Colin King, Rostockerstraße 38,
               10553 Berlin, E-Mail:{" "}
-              <a href="mailto:colin.kinginfo@gmail.com" className="text-yellow-400 hover:text-yellow-300">
-                colin.kinginfo@gmail.com
+              <a href="mailto:support@nachtfunke.de" className="text-yellow-400 hover:text-yellow-300">
+                support@nachtfunke.de
               </a>
               ) mittels einer eindeutigen Erklärung (z. B. per E-Mail) über deinen Entschluss,
               diesen Vertrag zu widerrufen, informieren. Du kannst dafür das beigefügte
@@ -72,10 +72,10 @@ export default function WiderrufPage() {
             <div className="bg-indigo-800/60 border border-indigo-700 rounded-xl p-5 font-mono text-xs leading-relaxed">
               <p>
                 An: Colin King, Rostockerstraße 38, 10553 Berlin<br />
-                E-Mail: colin.kinginfo@gmail.com<br />
+                E-Mail: support@nachtfunke.de<br />
                 <br />
                 Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*) abgeschlossenen Vertrag
-                über die Erbringung der folgenden Dienstleistung: Dreamland-Abonnement<br />
+                über die Erbringung der folgenden Dienstleistung: Nachtfunke-Abonnement<br />
                 <br />
                 Bestellt am (*): ______________<br />
                 Name des/der Verbraucher(s): ______________<br />

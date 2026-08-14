@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { verifiziereNutzer } from "@/lib/serverAuth"
 import { mitModellWettlauf, mitModellFallback } from "@/lib/geminiFallback"
+import { protokolliereNutzung, type TokenUsage } from "@/lib/kostenTracking"
 
 export const runtime = "nodejs"
 export const maxDuration = 60
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
         )
         return null
       }
-      return base64Pcm as string
+      return { audio: base64Pcm as string, usage: data.usageMetadata as TokenUsage | undefined }
     })
 
     if (!ergebnis) {
@@ -90,7 +91,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ fehler: "Audio konnte nicht erzeugt werden" }, { status: 500 })
     }
 
-    const pcm = Buffer.from(ergebnis.daten, "base64")
+    protokolliereNutzung("tts", ergebnis.modell, ergebnis.daten.usage)
+
+    const pcm = Buffer.from(ergebnis.daten.audio, "base64")
     const wav = pcmToWav(pcm)
     const wavBase64 = wav.toString("base64")
 

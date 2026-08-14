@@ -25,14 +25,18 @@ export default function Home() {
         </p>
 
         <Link
-          href="/generator"
+          href={hatAbo ? "/generator" : "/preise"}
           className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-10 py-4 rounded-full text-lg transition inline-block"
         >
-          {hatAbo ? t("home.cta") : t("home.ctaGratis")}
+          {hatAbo ? t("home.cta") : t("home.ctaStarten")}
         </Link>
-        {!hatAbo && (
-          <p className="text-indigo-400 text-xs mt-3">{t("home.ctaHinweis")}</p>
-        )}
+
+        <div className="mt-5">
+          <span className="inline-flex items-center gap-2 bg-indigo-900/60 border border-indigo-700 rounded-full px-4 py-1.5 text-indigo-300 text-xs">
+            <span>📱</span>
+            <span>{t("home.storesBald")}</span>
+          </span>
+        </div>
       </div>
 
       {/* Beispiel-Geschichte – Editorial-Stil, ohne Bild */}

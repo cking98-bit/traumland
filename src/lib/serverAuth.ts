@@ -35,3 +35,49 @@ export async function verifiziereNutzer(req: NextRequest): Promise<string | null
     return null
   }
 }
+
+// Wie verifiziereNutzer(), liefert zusätzlich die im Token hinterlegte E-Mail.
+// Nützlich, wenn Daten bei einem Drittanbieter (z. B. Stripe) über die
+// E-Mail statt über die uid zugeordnet werden.
+export async function verifiziereNutzerMitEmail(
+  req: NextRequest
+): Promise<{ uid: string; email: string | null } | null> {
+  const header = req.headers.get("authorization")
+  if (!header?.startsWith("Bearer ")) return null
+
+  try {
+    const { payload } = await jwtVerify(header.slice(7), JWKS, {
+      issuer: `https://securetoken.google.com/${PROJECT_ID}`,
+      audience: PROJECT_ID,
+      algorithms: ["RS256"],
+    })
+    if (typeof payload.sub !== "string" || payload.sub.length === 0) return null
+    return {
+      uid: payload.sub,
+      email: typeof payload.email === "string" ? payload.email : null,
+    }
+  } catch {
+    return null
+  }
+}
+
+// Wie verifiziereNutzer(), gibt zusätzlich zurück, ob die E-Mail im Token
+// mit ADMIN_EMAIL übereinstimmt – für interne, nur-für-dich-Routen (Kosten-Dashboard).
+export async function verifiziereAdmin(req: NextRequest): Promise<boolean> {
+  const header = req.headers.get("authorization")
+  if (!header?.startsWith("Bearer ")) return false
+  const adminEmail = process.env.ADMIN_EMAIL
+  if (!adminEmail) return false
+
+  try {
+    const { payload } = await jwtVerify(header.slice(7), JWKS, {
+      issuer: `https://securetoken.google.com/${PROJECT_ID}`,
+      audience: PROJECT_ID,
+      algorithms: ["RS256"],
+    })
+    const email = typeof payload.email === "string" ? payload.email.toLowerCase() : ""
+    return email === adminEmail.toLowerCase()
+  } catch {
+    return false
+  }
+}

@@ -18,7 +18,7 @@ export default function AgbPage() {
           <section>
             <h2 className="text-white font-bold text-lg mb-2">§ 1 Geltungsbereich und Anbieter</h2>
             <p>
-              Diese AGB gelten für alle Verträge über die Nutzung des Dienstes „Dreamland"
+              Diese AGB gelten für alle Verträge über die Nutzung des Dienstes „Nachtfunke"
               (KI-generierte Gute-Nacht-Geschichten) zwischen Colin King, Rostockerstraße 38,
               10553 Berlin (nachfolgend „Anbieter") und Verbrauchern (nachfolgend „Kunde").
             </p>
@@ -51,9 +51,9 @@ export default function AgbPage() {
             <h2 className="text-white font-bold text-lg mb-2">§ 4 Preise und Zahlung</h2>
             <p>
               Es gelten die zum Zeitpunkt der Bestellung auf der Preisseite angegebenen
-              Preise. Alle Preise verstehen sich inklusive der gesetzlichen Umsatzsteuer.
-              Die Zahlung erfolgt über Stripe. Monatstarife werden monatlich im Voraus
-              abgerechnet, der Jahrestarif jährlich im Voraus.
+              Preise. Gemäß § 19 UStG (Kleinunternehmerregelung) wird keine Umsatzsteuer
+              berechnet und ausgewiesen. Die Zahlung erfolgt über Stripe. Monatstarife
+              werden monatlich im Voraus abgerechnet, der Jahrestarif jährlich im Voraus.
             </p>
           </section>
 
@@ -134,7 +134,7 @@ export default function AgbPage() {
           </section>
 
           <p className="text-indigo-400 text-xs pt-4 border-t border-indigo-700">
-            Stand: Juli 2026
+            Stand: August 2026
           </p>
         </div>
       </div>

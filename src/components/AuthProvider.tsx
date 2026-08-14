@@ -16,7 +16,7 @@ type AuthContextType = {
   laden: boolean
   abo: Abo | null
   aboLaden: boolean
-  gratisGenutzt: boolean
+  schnupperGuthaben: number
   aboNeuLaden: () => Promise<void>
 }
 
@@ -25,7 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   laden: true,
   abo: null,
   aboLaden: true,
-  gratisGenutzt: false,
+  schnupperGuthaben: 0,
   aboNeuLaden: async () => {},
 })
 
@@ -42,20 +42,20 @@ export default function AuthProvider({
   const [laden, setLaden] = useState(true)
   const [abo, setAbo] = useState<Abo | null>(null)
   const [aboLaden, setAboLaden] = useState(true)
-  const [gratisGenutzt, setGratisGenutzt] = useState(false)
+  const [schnupperGuthaben, setSchnupperGuthaben] = useState(0)
 
-  // Abo + Gratis-Status aus Firestore (neu) laden
+  // Abo + Schnupper-Guthaben aus Firestore (neu) laden
   const aboNeuLaden = useCallback(async () => {
     if (!auth?.currentUser) {
       setAbo(null)
-      setGratisGenutzt(false)
+      setSchnupperGuthaben(0)
       setAboLaden(false)
       return
     }
     setAboLaden(true)
     const daten = await ladeNutzerDaten(auth.currentUser.uid)
     setAbo(daten.abo)
-    setGratisGenutzt(daten.gratisGenutzt)
+    setSchnupperGuthaben(daten.schnupperGuthaben)
     setAboLaden(false)
   }, [])
 
@@ -84,14 +84,14 @@ export default function AuthProvider({
           setAboLaden(true)
           const daten = await ladeNutzerDaten(user.uid)
           setAbo(daten.abo)
-          setGratisGenutzt(daten.gratisGenutzt)
+          setSchnupperGuthaben(daten.schnupperGuthaben)
           setAboLaden(false)
         }
       } else {
         vorherigeUid = null
         document.cookie = "__session=; path=/; max-age=0"
         setAbo(null)
-        setGratisGenutzt(false)
+        setSchnupperGuthaben(0)
         setAboLaden(false)
       }
     })
@@ -100,7 +100,7 @@ export default function AuthProvider({
 
   return (
     <AuthContext.Provider
-      value={{ nutzer, laden, abo, aboLaden, gratisGenutzt, aboNeuLaden }}
+      value={{ nutzer, laden, abo, aboLaden, schnupperGuthaben, aboNeuLaden }}
     >
       {children}
     </AuthContext.Provider>

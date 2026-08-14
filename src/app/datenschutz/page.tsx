@@ -21,8 +21,8 @@ export default function DatenschutzPage() {
               Rostockerstraße 38<br />
               10553 Berlin<br />
               E-Mail:{" "}
-              <a href="mailto:colin.kinginfo@gmail.com" className="text-yellow-400 hover:text-yellow-300">
-                colin.kinginfo@gmail.com
+              <a href="mailto:support@nachtfunke.de" className="text-yellow-400 hover:text-yellow-300">
+                support@nachtfunke.de
               </a>
             </p>
           </section>
@@ -151,8 +151,8 @@ export default function DatenschutzPage() {
             </ul>
             <p className="mt-2">
               Zur Ausübung dieser Rechte wende dich an:{" "}
-              <a href="mailto:colin.kinginfo@gmail.com" className="text-yellow-400 hover:text-yellow-300">
-                colin.kinginfo@gmail.com
+              <a href="mailto:support@nachtfunke.de" className="text-yellow-400 hover:text-yellow-300">
+                support@nachtfunke.de
               </a>
             </p>
           </section>
@@ -177,7 +177,7 @@ export default function DatenschutzPage() {
           </section>
 
           <p className="text-indigo-400 text-xs pt-4 border-t border-indigo-700">
-            Stand: Juli 2026
+            Stand: August 2026
           </p>
         </div>
       </div>

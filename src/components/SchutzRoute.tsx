@@ -9,9 +9,9 @@ export default function SchutzRoute({
   abo = false,
 }: {
   children: React.ReactNode
-  abo?: boolean // true = zusätzlich aktives Abo erforderlich
+  abo?: boolean // true = Abo ODER Schnupper-Guthaben erforderlich
 }) {
-  const { nutzer, laden, abo: aboStatus, aboLaden } = useAuth()
+  const { nutzer, laden, abo: aboStatus, aboLaden, schnupperGuthaben } = useAuth()
   const router = useRouter()
   const [bereit, setBereit] = useState(false)
 
@@ -24,17 +24,20 @@ export default function SchutzRoute({
       return
     }
 
-    // Abo erforderlich: erst warten bis geladen, dann ggf. umleiten
+    // Zugang erforderlich: erst warten bis geladen, dann ggf. umleiten.
+    // Schnupper-Guthaben zählt genauso wie ein Abo – sonst landen Käufer
+    // des Schnupper-Pakets in einer Endlosschleife zur Preisseite.
     if (abo) {
       if (aboLaden) return
-      if (!aboStatus) {
+      const hatZugang = !!aboStatus || schnupperGuthaben > 0
+      if (!hatZugang) {
         router.push("/preise")
         return
       }
     }
 
     setBereit(true)
-  }, [nutzer, laden, abo, aboStatus, aboLaden, router])
+  }, [nutzer, laden, abo, aboStatus, aboLaden, schnupperGuthaben, router])
 
   if (laden || (abo && aboLaden) || !bereit) {
     return (

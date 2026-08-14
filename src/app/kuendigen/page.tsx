@@ -34,7 +34,7 @@ export default function KuendigenPage() {
       if (!data.ok) throw new Error()
       setBestaetigung({ referenz: data.referenz, eingegangen: data.eingegangen })
     } catch {
-      setFehler("Die Kündigung konnte nicht übermittelt werden. Bitte versuche es erneut oder schreibe an colin.kinginfo@gmail.com.")
+      setFehler("Die Kündigung konnte nicht übermittelt werden. Bitte versuche es erneut oder schreibe an support@nachtfunke.de.")
     } finally {
       setLaedt(false)
     }
@@ -51,7 +51,7 @@ export default function KuendigenPage() {
       <div className="bg-indigo-900 rounded-2xl p-8">
         <h1 className="text-3xl font-bold text-white mb-2">Verträge hier kündigen</h1>
         <p className="text-indigo-300 text-sm mb-8">
-          Hier kannst du dein Dreamland-Abonnement kündigen – auch ohne eingeloggt zu sein.
+          Hier kannst du dein Nachtfunke-Abonnement kündigen – auch ohne eingeloggt zu sein.
           Die Kündigung wird zum Ende des laufenden Abrechnungszeitraums wirksam.
         </p>
 

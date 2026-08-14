@@ -22,22 +22,6 @@ type Plan = {
 
 const PLAENE: Plan[] = [
   {
-    id: "light",
-    nameKey: "plan.light",
-    basisPreis: 10.99,
-    proKind: 6.99,
-    periodeKey: "preise.monat",
-    basisGeschichten: 30,
-    proKindGeschichten: 30,
-    featureKeys: [
-      "feat.profil",
-      "feat.bis5",
-      "feat.vorlesen",
-      "feat.bibliothek",
-      "feat.monatlichKuendbar",
-    ],
-  },
-  {
     id: "familie",
     nameKey: "plan.familie",
     basisPreis: 13.99,
@@ -169,11 +153,11 @@ function PlanKarte({ plan }: { plan: Plan }) {
       if (data.url) {
         window.location.href = data.url
       } else {
-        setFehler(t("wechsel.fehler"))
+        setFehler(t("kauf.fehler"))
         setLaedt(false)
       }
     } catch {
-      setFehler(t("wechsel.fehler"))
+      setFehler(t("kauf.fehler"))
       setLaedt(false)
     }
   }
@@ -353,6 +337,133 @@ function PlanKarte({ plan }: { plan: Plan }) {
   )
 }
 
+const SCHNUPPER_PREIS = 4.99
+const SCHNUPPER_GESCHICHTEN = 10
+
+function SchnupperKarte() {
+  const { t, sprache } = useSprache()
+  const { nutzer } = useAuth()
+  const router = useRouter()
+  const [laedt, setLaedt] = useState(false)
+  const [fehler, setFehler] = useState("")
+  const [zeigKauf, setZeigKauf] = useState(false)
+  const [zustimmung, setZustimmung] = useState(false)
+
+  async function kaufen() {
+    if (!nutzer) {
+      router.push("/login")
+      return
+    }
+    setLaedt(true)
+    setFehler("")
+    try {
+      const res = await authFetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: "schnupper", email: nutzer.email }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        setFehler(t("kauf.fehler"))
+        setLaedt(false)
+      }
+    } catch {
+      setFehler(t("kauf.fehler"))
+      setLaedt(false)
+    }
+  }
+
+  return (
+    <div className="relative rounded-2xl p-7 flex flex-col bg-indigo-900">
+      <h2 className="text-white font-bold text-xl mb-1">{t("plan.schnupper")}</h2>
+
+      <div className="flex items-baseline gap-1">
+        <span className="text-white text-4xl font-bold">
+          {euro(SCHNUPPER_PREIS, sprache)}
+        </span>
+        <span className="text-indigo-400 text-sm">{t("preise.einmalig")}</span>
+      </div>
+
+      <p className="text-indigo-300 text-sm mt-4 mb-5">
+        {t("plan.schnupperBeschreibung")}
+      </p>
+
+      <ul className="flex flex-col gap-3 mb-8 flex-1">
+        {["feat.profil", "feat.bis5", "feat.vorlesen", "feat.bibliothek"].map((fk) => (
+          <li key={fk} className="flex items-start gap-2 text-indigo-200 text-sm">
+            <span className="text-yellow-400 mt-0.5">✓</span>
+            {t(fk)}
+          </li>
+        ))}
+        <li className="flex items-start gap-2 text-indigo-200 text-sm">
+          <span className="text-yellow-400 mt-0.5">✓</span>
+          {SCHNUPPER_GESCHICHTEN} {t("preise.geschichtenGesamt")}
+        </li>
+      </ul>
+
+      {fehler && (
+        <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-xl px-4 py-3 text-xs mb-4">
+          {fehler}
+        </div>
+      )}
+
+      {zeigKauf ? (
+        <div className="bg-indigo-800 border border-yellow-400/40 rounded-xl p-4 mb-2">
+          <h3 className="text-white font-bold text-sm mb-3">{t("kauf.titel")}</h3>
+
+          <label className="flex items-start gap-3 cursor-pointer mb-4">
+            <input
+              type="checkbox"
+              checked={zustimmung}
+              onChange={(e) => setZustimmung(e.target.checked)}
+              className="mt-0.5 w-4 h-4 accent-yellow-400"
+            />
+            <span className="text-indigo-200 text-xs leading-relaxed">
+              {t("kauf.zustimmung")}{" "}
+              <a href="/agb" target="_blank" className="text-yellow-400 underline">
+                {t("preise.agbLink")}
+              </a>{" "}
+              &{" "}
+              <a href="/widerruf" target="_blank" className="text-yellow-400 underline">
+                {t("preise.widerrufLink")}
+              </a>
+            </span>
+          </label>
+
+          <div className="flex flex-col gap-2">
+            <button
+              onClick={kaufen}
+              disabled={laedt || !zustimmung}
+              className="w-full bg-yellow-400 hover:bg-yellow-300 disabled:opacity-50 text-indigo-950 font-bold py-2.5 rounded-lg text-sm transition"
+            >
+              {laedt ? "…" : t("kauf.weiter")}
+            </button>
+            <button
+              onClick={() => {
+                setZeigKauf(false)
+                setZustimmung(false)
+              }}
+              disabled={laedt}
+              className="w-full bg-indigo-700 hover:bg-indigo-600 text-white font-bold py-2.5 rounded-lg text-sm transition"
+            >
+              {t("wechsel.abbrechen")}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button
+          onClick={() => (nutzer ? setZeigKauf(true) : router.push("/login"))}
+          className="w-full font-bold py-3 rounded-xl transition bg-indigo-800 hover:bg-indigo-700 text-white"
+        >
+          {t("plan.schnupperKaufen")}
+        </button>
+      )}
+    </div>
+  )
+}
+
 export default function PreisePage() {
   const { t } = useSprache()
 
@@ -366,6 +477,7 @@ export default function PreisePage() {
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
+        <SchnupperKarte />
         {PLAENE.map((plan) => (
           <PlanKarte key={plan.id} plan={plan} />
         ))}

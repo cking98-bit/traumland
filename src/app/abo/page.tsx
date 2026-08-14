@@ -26,11 +26,22 @@ type AboDetails = {
   subscriptionStatus: string | null
 }
 
+type Rechnung = {
+  id: string
+  datum: number
+  betrag: number
+  beschreibung: string
+  status: string
+  pdfUrl: string | null
+  ansichtUrl: string | null
+}
+
 export default function AboPage() {
   const { t, sprache } = useSprache()
-  const { nutzer, laden: authLaden, aboLaden, aboNeuLaden } = useAuth()
+  const { nutzer, laden: authLaden, aboLaden, aboNeuLaden, schnupperGuthaben } = useAuth()
 
   const [details, setDetails] = useState<AboDetails | null>(null)
+  const [rechnungen, setRechnungen] = useState<Rechnung[]>([])
   const [laden, setLaden] = useState(true)
   const [fehler, setFehler] = useState("")
   const [zeigBestaetigung, setZeigBestaetigung] = useState(false)
@@ -74,6 +85,15 @@ export default function AboPage() {
         }
       })
       .finally(() => setLaden(false))
+
+    // Rechnungen unabhängig vom Abo laden – auch reine Schnupper-Käufer
+    // sollen ihre Belege sehen.
+    authFetch(`/api/abo/rechnungen`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (Array.isArray(data.rechnungen)) setRechnungen(data.rechnungen)
+      })
+      .catch(() => {})
   }, [nutzer, authLaden, aboLaden]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function kuendigen() {
@@ -143,11 +163,7 @@ export default function AboPage() {
   const istJahr = details?.abo.plan === "familie-jahr"
 
   function planNameFuer(plan: string) {
-    return plan === "light"
-      ? t("plan.light")
-      : plan === "familie"
-      ? t("plan.familie")
-      : t("plan.familieJahr")
+    return plan === "familie" ? t("plan.familie") : t("plan.familieJahr")
   }
 
   function formatDatum(ts: number) {
@@ -205,14 +221,50 @@ export default function AboPage() {
             </button>
           </div>
         ) : !details ? (
-          <div className="bg-indigo-900 rounded-2xl p-8 text-center">
-            <p className="text-indigo-300 mb-4">{t("abo.keinAbo")}</p>
-            <Link
-              href="/preise"
-              className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-6 py-3 rounded-xl transition inline-block"
-            >
-              {t("abo.aboAbschliessen")}
-            </Link>
+          <div className="flex flex-col gap-4">
+            {/* Schnupper-Paket: kein Abo, aber Guthaben vorhanden */}
+            {schnupperGuthaben > 0 ? (
+              <div className="bg-indigo-900 rounded-2xl p-6 flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-indigo-400 text-sm">{t("abo.plan")}</span>
+                  <span className="text-white font-bold">{t("plan.schnupper")}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-indigo-400 text-sm">{t("abo.verbleibend")}</span>
+                  <span className="text-white font-bold">
+                    {t("abo.geschichtenAnzahl").replace("{n}", String(schnupperGuthaben))}
+                  </span>
+                </div>
+
+                <div className="bg-indigo-800/60 rounded-xl px-4 py-3">
+                  <p className="text-indigo-300 text-xs">{t("abo.schnupperHinweis")}</p>
+                </div>
+
+                <Link
+                  href="/preise"
+                  className="text-center bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-5 py-3 rounded-xl transition"
+                >
+                  {t("abo.aboAbschliessen")}
+                </Link>
+              </div>
+            ) : (
+              <div className="bg-indigo-900 rounded-2xl p-8 text-center">
+                <p className="text-indigo-300 mb-4">{t("abo.keinAbo")}</p>
+                <Link
+                  href="/preise"
+                  className="bg-yellow-400 hover:bg-yellow-300 text-indigo-950 font-bold px-6 py-3 rounded-xl transition inline-block"
+                >
+                  {t("abo.aboAbschliessen")}
+                </Link>
+              </div>
+            )}
+
+            <Rechnungsliste
+              rechnungen={rechnungen}
+              t={t}
+              sprache={sprache}
+            />
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -381,9 +433,81 @@ export default function AboPage() {
                 </div>
               </div>
             )}
+
+            <Rechnungsliste rechnungen={rechnungen} t={t} sprache={sprache} />
           </div>
         )}
       </div>
     </SchutzRoute>
+  )
+}
+
+// Zahlungsbelege kommen direkt von Stripe (gehostet + als PDF) – wir listen
+// sie nur auf, statt eigene Rechnungen zu erzeugen.
+function Rechnungsliste({
+  rechnungen,
+  t,
+  sprache,
+}: {
+  rechnungen: Rechnung[]
+  t: (k: string) => string
+  sprache: string
+}) {
+  if (rechnungen.length === 0) return null
+
+  function datum(ts: number) {
+    return new Date(ts * 1000).toLocaleDateString(
+      sprache === "de" ? "de-DE" : "en-GB",
+      { day: "2-digit", month: "2-digit", year: "numeric" }
+    )
+  }
+
+  function betrag(n: number) {
+    return n.toFixed(2).replace(".", sprache === "de" ? "," : ".") + " €"
+  }
+
+  return (
+    <div className="bg-indigo-900 rounded-2xl p-6">
+      <h2 className="text-white font-bold mb-4">{t("abo.rechnungen")}</h2>
+      <div className="flex flex-col divide-y divide-indigo-800">
+        {rechnungen.map((r) => (
+          <div
+            key={r.id}
+            className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0"
+          >
+            <div className="min-w-0">
+              <p className="text-white text-sm font-medium truncate">
+                {r.beschreibung}
+              </p>
+              <p className="text-indigo-400 text-xs">
+                {datum(r.datum)} · {betrag(r.betrag)}
+              </p>
+            </div>
+            <div className="flex gap-2 shrink-0">
+              {r.pdfUrl && (
+                <a
+                  href={r.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-yellow-400 hover:text-yellow-300 text-xs font-medium underline"
+                >
+                  PDF
+                </a>
+              )}
+              {r.ansichtUrl && (
+                <a
+                  href={r.ansichtUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-indigo-300 hover:text-white text-xs font-medium underline"
+                >
+                  {t("abo.belegAnsehen")}
+                </a>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }

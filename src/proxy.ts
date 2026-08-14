@@ -10,6 +10,7 @@ const öffentlicheSeiten = [
   "/agb",
   "/widerruf",
   "/kuendigen",
+  "/kontakt",
 ]
 
 export function proxy(request: NextRequest) {

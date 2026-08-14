@@ -9,7 +9,7 @@ function formatZeit(sekunden: number): string {
   return `${m}:${String(s).padStart(2, "0")}`
 }
 
-// Eigener Audio-Player im Dreamland-Stil (Variante B, ohne Download-Option)
+// Eigener Audio-Player im Nachtfunke-Stil (Variante B, ohne Download-Option)
 export default function DemoPlayer({ src }: { src: string }) {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const balkenRef = useRef<HTMLDivElement | null>(null)
