@@ -11,6 +11,9 @@ const öffentlicheSeiten = [
   "/widerruf",
   "/kuendigen",
   "/kontakt",
+  // Passwort zuruecksetzen: der Nutzer ist per Definition ausgeloggt,
+  // legitimiert wird er ueber den oobCode im Link.
+  "/auth/action",
 ]
 
 export function proxy(request: NextRequest) {
