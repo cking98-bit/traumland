@@ -1,31 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getAuth } from "firebase-admin/auth"
 import { sendeMail } from "@/lib/mail"
-import "@/lib/firebaseAdmin"
+import { findeNutzer, erzeugeResetLink } from "@/lib/identityToolkit"
 
 export const runtime = "nodejs"
 
 export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json()
-    if (!email?.trim()) {
-      return NextResponse.json({ ok: true })
-    }
+    if (!email?.trim()) return NextResponse.json({ ok: true })
 
     const sEmail = String(email).trim().toLowerCase()
 
-    let user
-    try {
-      user = await getAuth().getUserByEmail(sEmail)
-    } catch {
-      return NextResponse.json({ ok: true })
-    }
+    // Unbekannte Adressen bewusst wie Erfolg behandeln – sonst liesse sich
+    // ueber die Antwort herausfinden, welche Adressen ein Konto haben.
+    const nutzer = await findeNutzer(sEmail)
+    if (!nutzer) return NextResponse.json({ ok: true })
 
-    const link = await getAuth().generatePasswordResetLink(sEmail, {
-      url: `${process.env.NEXT_PUBLIC_BASE_URL}/login`,
-    })
-
-    const name = user.displayName?.trim() ?? ""
+    const link = await erzeugeResetLink(sEmail)
+    const name = nutzer.displayName.trim()
 
     await sendeMail(
       sEmail,
@@ -37,6 +29,8 @@ du hast eine Anfrage zum Zurücksetzen deines Passworts gestellt.
 Klicke auf den folgenden Link, um ein neues Passwort zu vergeben:
 
 ${link}
+
+Der Link ist aus Sicherheitsgründen nur begrenzt gültig.
 
 Wenn du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren. Dein Passwort bleibt unverändert.`
     )
