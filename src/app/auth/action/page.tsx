@@ -1,13 +1,40 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { verifyPasswordResetCode, confirmPasswordReset } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import Link from "next/link"
 import { useSprache } from "@/components/LanguageProvider"
 
+// useSearchParams() zwingt die Seite ins Client-Rendering – ohne Suspense
+// bricht der Prerender beim Build ab.
 export default function AuthActionPage() {
+  return (
+    <Suspense fallback={<Rahmen>{null}</Rahmen>}>
+      <AuthAction />
+    </Suspense>
+  )
+}
+
+function Rahmen({ children }: { children: React.ReactNode }) {
+  const { t } = useSprache()
+  return (
+    <div className="min-h-[80vh] flex items-center justify-center">
+      <div className="bg-indigo-900 rounded-2xl p-10 w-full max-w-md">
+        <div className="text-center mb-8">
+          <div className="text-6xl mb-4">🌙</div>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            {t("login.passwortReset")}
+          </h1>
+        </div>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function AuthAction() {
   const { t } = useSprache()
   const params = useSearchParams()
   const mode = params.get("mode")
@@ -61,16 +88,8 @@ export default function AuthActionPage() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center">
-      <div className="bg-indigo-900 rounded-2xl p-10 w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🌙</div>
-          <h1 className="text-3xl font-bold text-white mb-2">
-            {t("login.passwortReset")}
-          </h1>
-        </div>
-
-        {ungueltig ? (
+    <Rahmen>
+      {ungueltig ? (
           <div className="flex flex-col gap-4">
             <div className="bg-red-500/20 border border-red-500 text-red-300 rounded-xl px-4 py-3 text-sm">
               {t("auth.linkUngueltig")}
@@ -143,7 +162,6 @@ export default function AuthActionPage() {
             </button>
           </div>
         )}
-      </div>
-    </div>
+    </Rahmen>
   )
 }
