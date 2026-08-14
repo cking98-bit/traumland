@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { getAuth } from "firebase-admin/auth"
 import { sendeMail } from "@/lib/mail"
-import { adminAuth } from "@/lib/firebaseAdmin"
+import "@/lib/firebaseAdmin"
 
 export const runtime = "nodejs"
 
@@ -15,12 +16,12 @@ export async function POST(req: NextRequest) {
 
     let user
     try {
-      user = await adminAuth.getUserByEmail(sEmail)
+      user = await getAuth().getUserByEmail(sEmail)
     } catch {
       return NextResponse.json({ ok: true })
     }
 
-    const link = await adminAuth.generatePasswordResetLink(sEmail, {
+    const link = await getAuth().generatePasswordResetLink(sEmail, {
       url: `${process.env.NEXT_PUBLIC_BASE_URL}/login`,
     })
 
